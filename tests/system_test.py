@@ -292,6 +292,7 @@ class Process(subprocess.Popen):
         self.outdir = os.getcwd()
         self.outfile = os.path.abspath(self.unique(self.name))
         self.torndown = False
+        kwargs.setdefault('stdin', subprocess.PIPE)
         with open(self.outfile + '.out', 'w') as out:
             kwargs.setdefault('stdout', out)
             kwargs.setdefault('stderr', subprocess.STDOUT)
@@ -343,8 +344,8 @@ class Config:
 
 
 class HttpServer(Process):
-    def __init__(self, args, name=None, expect=Process.RUNNING):
-        super(HttpServer, self).__init__(args, name=name, expect=expect)
+    def __init__(self, args, name=None, expect=Process.RUNNING, **kwargs):
+        super(HttpServer, self).__init__(args, name=name, expect=expect, **kwargs)
 
 
 class Http2Server(HttpServer):
@@ -353,7 +354,8 @@ class Http2Server(HttpServer):
     def __init__(self, name=None, listen_port=None, wait=True,
                  perform_teardown=True, cl_args=None,
                  server_file=None,
-                 expect=Process.RUNNING):
+                 expect=Process.RUNNING,
+                 **kwargs):
         self.name = name
         self.listen_port = listen_port
         self.ports_family = {self.listen_port: 'IPv4'}
@@ -364,7 +366,7 @@ class Http2Server(HttpServer):
         self.args = [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), self.server_file)]
         if self.cl_args:
             self.args += self.cl_args
-        super(Http2Server, self).__init__(self.args, name=name, expect=expect)
+        super(Http2Server, self).__init__(self.args, name=name, expect=expect, **kwargs)
         if wait:
             self.wait_ready()
 
@@ -617,7 +619,14 @@ class Qdrouterd(Process):
     def http_addresses(self):
         """Return http://host:port addresses for all http listeners"""
         cfg = self.config.sections('httpListener')
-        return ["http://%s" % self._cfg_2_host_port(l) for l in cfg]
+        ret_val = []
+        for listener in cfg:
+            require_tls = listener.get("sslProfile")
+            if require_tls is not None:
+                ret_val.append("https://%s" % self._cfg_2_host_port(listener))
+            else:
+                ret_val.append("http://%s" % self._cfg_2_host_port(listener))
+        return ret_val
 
     @property
     def addresses(self):
@@ -647,6 +656,7 @@ class Qdrouterd(Process):
                 outs = '%s:%s' % (host, port)
                 if result[index_host] == outs:
                     ret_val = True
+                    break
             return ret_val
         except:
             return False
@@ -708,7 +718,10 @@ class Qdrouterd(Process):
         @param retry_kwargs: keyword args for L{retry}
         """
         for c in self.config.sections('connector'):
-            assert retry(lambda: self.is_connected(port=c['port'], host=self.get_host(c.get('socketAddressFamily'))),
+
+            assert retry(lambda: self.is_connected(port=c['port'],
+                                                   host=c.get('host') if c.get('host') else
+                                                   self.get_host(c.get('socketAddressFamily'))),
                          **retry_kwargs), "Port not connected %s" % c['port']
 
     def wait_startup_message(self, **retry_kwargs):
@@ -751,11 +764,6 @@ class Qdrouterd(Process):
         node = None
         try:
             self.management.read(identity="router.node/%s" % router_id)
-            # TODO aconway 2015-01-29: The above check should be enough, we
-            # should not advertise a remote router in management till it is fully
-            # connected. However we still get a race where the router is not
-            # actually ready for traffic. Investigate.
-            # Meantime the following actually tests send-thru to the router.
             node = Node.connect(self.addresses[0], router_id, timeout=1)
             return retry_exception(lambda: node.query('io.skupper.router.router'))
         except (proton.ConnectionException, NotFoundStatus, proton.utils.LinkDetached):
