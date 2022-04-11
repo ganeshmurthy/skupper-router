@@ -17,12 +17,17 @@
 # under the License.
 #
 
-name: Release skupper-router
+name: Create a tagged skupper-router release
 #on:
 #  release:
 #    types: [published]
 on:
-  workflow_dispatch:
+  push:
+    # Sequence of patterns matched against tags
+    # Right now, we run this job automatically when a semantically versioned
+    # tag is pushed.
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
@@ -30,9 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set container tag
+      - name: Get the tag name and set it as the DOCKER_TAG env variable.
         run:  |
-          echo "DOCKER_TAG=`cat VERSION.txt`" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
       - name: Build and publish skupper-router image
         run: |
           export PROJECT_TAG="${DOCKER_TAG}"
