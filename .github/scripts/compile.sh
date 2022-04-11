@@ -39,6 +39,9 @@ wget ${PROTON_SOURCE_URL} -O qpid-proton.tar.gz
 mkdir -p qpid-proton-src build staging proton_build proton_install
 tar -zxf qpid-proton.tar.gz -C qpid-proton-src --strip-components 1
 
+echo LOL3 Version is $VERSION
+echo LOL4 Version is ${VERSION}
+
 do_patch "patches/proton" qpid-proton-src
 
 cd proton_build
@@ -56,6 +59,7 @@ cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
   -DProton_USE_STATIC_LIBS=ON -DUSE_LIBWEBSOCKETS=ON -DUSE_LIBNGHTTP2=ON \
   -DBUILD_TESTING=OFF \
+  -DVERSION=${VERSION} \
   -DCMAKE_INSTALL_PREFIX=/usr $WORKING/ \
     && VERBOSE=1 make DESTDIR=$WORKING/staging/ install \
     && tar -z -C $WORKING/staging/ -cf /skupper-router-image.tar.gz usr etc

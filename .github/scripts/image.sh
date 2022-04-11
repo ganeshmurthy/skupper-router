@@ -17,10 +17,31 @@
 # under the License.
 #
 
-. ./.github/scripts/common.sh
+DOCKER=docker
+PROJECT_NAME=skupper-router
+DOCKER_REGISTRY=quay.io
+DOCKER_ORG=skupper
+
+# If PROJECT_TAG is not defined set PROJECT_TAG to main
+PUSH_LATEST=true
+if [ -z "$PROJECT_TAG" ]
+then
+  PROJECT_TAG=main
+fi
+
+
+# If PROJECT_TAG is not main (it is possibly a release), don't push the :latest tag
+if [[ ${PROJECT_TAG} =~ rc || ${PROJECT_TAG} =~ x || ${PROJECT_TAG} =~ freeze || "${PROJECT_TAG}" != main ]]; then
+    PUSH_LATEST=false
+fi
+export VERSION=${VERSION:-"UNKNOWN"}
+
+echo LOL0 Version is $VERSION
+echo LOL1 Version is ${VERSION}
+
 
 # Building the skupper-router image
-${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} -f ./Containerfile .
+${DOCKER} build --build-arg VERSION=$VERSION -t ${PROJECT_NAME}:${PROJECT_TAG}  -f ./Containerfile .
 
 # Pushing only when credentials available
 if [[ -n "${DOCKER_USER}" && -n "${DOCKER_PASSWORD}" ]]; then
