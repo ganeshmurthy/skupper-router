@@ -37,6 +37,7 @@ WORKDIR /build
 COPY . .
 ENV PROTON_VERSION=0.37.0
 ENV PROTON_SOURCE_URL=${PROTON_SOURCE_URL:-http://archive.apache.org/dist/qpid/proton/${PROTON_VERSION}/qpid-proton-${PROTON_VERSION}.tar.gz}
+ENV VERSION=${VERSION:-"UNKNOWN"}
 RUN .github/scripts/compile.sh
 
 
