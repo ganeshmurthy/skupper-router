@@ -34,7 +34,7 @@ fi
 if [[ ${PROJECT_TAG} =~ rc || ${PROJECT_TAG} =~ x || ${PROJECT_TAG} =~ freeze || "${PROJECT_TAG}" != main ]]; then
     PUSH_LATEST=false
 fi
-VERSION=${VERSION:-"UNKNOWN"}
+export VERSION=${VERSION:-"UNKNOWN"}
 # Building the skupper-router image
 ${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} -f ./Containerfile .
 

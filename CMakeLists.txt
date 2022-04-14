@@ -59,13 +59,6 @@ else()
     option(QD_ENABLE_ASSERTIONS "Enable assertions" OFF)
 endif()
 
-## Check to see if the VERSION environment variable is defined
-#if(DEFINED $ENV{VERSION})
-#  set(QPID_DISPATCH_VERSION $ENV{VERSION})
-##else()
-#  set(QPID_DISPATCH_VERSION "UNKNOWN")
-#endif()
-
 if(NOT DEFINED VERSION)
   set(QPID_DISPATCH_VERSION "UNKNOWN")
 else()
