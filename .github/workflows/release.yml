@@ -38,6 +38,7 @@ jobs:
       - name: Build and publish skupper-router image
         run: |
           export PROJECT_TAG="${DOCKER_TAG}"
+          export VERSION="${DOCKER_TAG}"
           ./.github/scripts/image.sh
         env:
           DOCKER_USER: '${{ secrets.DOCKER_USER }}'
