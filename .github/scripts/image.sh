@@ -35,6 +35,7 @@ if [[ ${PROJECT_TAG} =~ rc || ${PROJECT_TAG} =~ x || ${PROJECT_TAG} =~ freeze ||
     PUSH_LATEST=false
 fi
 export VERSION=${VERSION:-"UNKNOWN"}
+echo LOL Version is $VERSION
 # Building the skupper-router image
 ${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} -f ./Containerfile .
 

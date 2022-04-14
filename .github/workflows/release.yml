@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Release a tagged skupper-router
+name: Release skupper-router
 on:
   push:
     # Sequence of patterns matched against tags
