@@ -36,8 +36,8 @@ if [[ ${PROJECT_TAG} =~ rc || ${PROJECT_TAG} =~ x || ${PROJECT_TAG} =~ freeze ||
 fi
 export VERSION=${VERSION:-"UNKNOWN"}
 
-echo LOL1 Version is $VERSION
-echo LOL2 Version is ${VERSION}
+echo LOL0 Version is $VERSION
+echo LOL1 Version is ${VERSION}
 
 
 # Building the skupper-router image
