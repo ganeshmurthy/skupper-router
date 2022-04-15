@@ -41,7 +41,7 @@ echo LOL1 Version is ${VERSION}
 
 
 # Building the skupper-router image
-${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} --build-arg VERSION=$VERSION -f ./Containerfile .
+${DOCKER} build --build-arg VERSION=$VERSION -t ${PROJECT_NAME}:${PROJECT_TAG}  -f ./Containerfile .
 
 # Pushing only when credentials available
 if [[ -n "${DOCKER_USER}" && -n "${DOCKER_PASSWORD}" ]]; then
