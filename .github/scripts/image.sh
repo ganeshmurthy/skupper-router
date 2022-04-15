@@ -36,8 +36,12 @@ if [[ ${PROJECT_TAG} =~ rc || ${PROJECT_TAG} =~ x || ${PROJECT_TAG} =~ freeze ||
 fi
 export VERSION=${VERSION:-"UNKNOWN"}
 
+echo LOL1 Version is $VERSION
+echo LOL2 Version is ${VERSION}
+
+
 # Building the skupper-router image
-${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} -f ./Containerfile .
+${DOCKER} build -t ${PROJECT_NAME}:${PROJECT_TAG} --build-arg VERSION=$VERSION -f ./Containerfile .
 
 # Pushing only when credentials available
 if [[ -n "${DOCKER_USER}" && -n "${DOCKER_PASSWORD}" ]]; then

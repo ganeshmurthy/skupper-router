@@ -39,8 +39,8 @@ wget ${PROTON_SOURCE_URL} -O qpid-proton.tar.gz
 mkdir -p qpid-proton-src build staging proton_build proton_install
 tar -zxf qpid-proton.tar.gz -C qpid-proton-src --strip-components 1
 
-echo LOL Version is $VERSION
-echo LOL1 Version is ${VERSION}
+echo LOL3 Version is $VERSION
+echo LOL4 Version is ${VERSION}
 
 do_patch "patches/proton" qpid-proton-src
 
