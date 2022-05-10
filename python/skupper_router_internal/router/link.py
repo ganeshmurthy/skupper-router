@@ -18,7 +18,7 @@
 #
 
 from .data import MessageRA, MessageLSU, MessageLSR
-from ..dispatch import LOG_TRACE
+from ..dispatch import LOG_TRACE   # type: ignore[attr-defined]
 
 
 class LinkStateEngine:

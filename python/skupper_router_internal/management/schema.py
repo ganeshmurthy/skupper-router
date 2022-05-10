@@ -33,7 +33,7 @@ from skupper_router.management.entity import EntityBase
 from skupper_router.management.error import NotImplementedStatus
 
 try:
-    from ..dispatch import LogAdapter, LOG_WARNING
+    from ..dispatch import LogAdapter, LOG_WARNING  # type: ignore[attr-defined]
     logger_available = True
 except ImportError:
     # We need to do this because at compile time the schema is pulled using this code and at that time the

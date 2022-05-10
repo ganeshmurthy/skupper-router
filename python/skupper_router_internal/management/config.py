@@ -28,14 +28,14 @@ from typing import Any, Dict, Iterable, List, Optional, Union, TYPE_CHECKING, Te
 
 from skupper_router.management.entity import camelcase
 
-from ..dispatch import QdDll
+from ..dispatch import QdDll  # type: ignore[attr-defined]
 from .qdrouter import QdSchema
 
 if TYPE_CHECKING:
     from .schema import EntityType
 
 try:
-    from ..dispatch import LogAdapter, LOG_WARNING, LOG_ERROR
+    from ..dispatch import LogAdapter, LOG_WARNING, LOG_ERROR   # type: ignore[attr-defined]
     _log_imported = True
 except ImportError:
     # unit test cannot import since LogAdapter not set up
@@ -280,7 +280,7 @@ class PolicyConfig(Config):
 def configure_dispatch(dispatch: int, filename: str) -> None:
     """Called by C router code to load configuration file and do configuration"""
     qd = QdDll()
-    dispatch = qd.qd_dispatch_p(dispatch)
+    dispatch = qd.qd_dispatch_p(dispatch)  # type: ignore[assignment]
     config = Config(filename)
 
     # NOTE: Can't import agent until dispatch C extension module is initialized.

@@ -78,7 +78,7 @@ import skupper_router_site
 from skupper_router.management.entity import camelcase
 from skupper_router.management.error import ManagementError, OK, CREATED, NO_CONTENT, STATUS_TEXT, \
     BadRequestStatus, InternalServerErrorStatus, NotImplementedStatus, NotFoundStatus
-from ..dispatch import IoAdapter, LogAdapter, LOG_INFO, LOG_DEBUG, LOG_ERROR, TREATMENT_ANYCAST_CLOSEST
+from ..dispatch import IoAdapter, LogAdapter, LOG_INFO, LOG_DEBUG, LOG_ERROR, TREATMENT_ANYCAST_CLOSEST  # type: ignore[attr-defined]
 from .schema import ValidationError, SchemaEntity, EntityType
 from .qdrouter import QdSchema
 from ..router.message import Message

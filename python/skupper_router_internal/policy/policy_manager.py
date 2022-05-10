@@ -23,7 +23,7 @@ import traceback
 from typing import TYPE_CHECKING
 
 from .policy_local import PolicyLocal
-from ..dispatch import LogAdapter, LOG_INFO, LOG_TRACE, LOG_DEBUG, LOG_ERROR, LOG_WARNING
+from ..dispatch import LogAdapter, LOG_INFO, LOG_TRACE, LOG_DEBUG, LOG_ERROR, LOG_WARNING  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
     from ..management.agent import Agent

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from ..dispatch import LOG_INFO, LOG_TRACE, LOG_DEBUG
+from ..dispatch import LOG_INFO, LOG_TRACE, LOG_DEBUG  # type: ignore[attr-defined]
 from .data import LinkState, ProtocolVersion
 from .address import Address
 

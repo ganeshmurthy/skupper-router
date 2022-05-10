@@ -24,7 +24,7 @@ from skupper_router_internal import dispatch as real_dispatch
 from . import dispatch as mock_dispatch
 
 # For tests we want to allow loading the proton module.
-real_dispatch.FORBIDDEN = []
+real_dispatch.FORBIDDEN = []  # type: ignore[attr-defined]
 
 for name in dir(mock_dispatch):
     if not name.startswith("_"):

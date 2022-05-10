@@ -33,8 +33,7 @@ from .message import Message
 # Import the Dispatch adapters from the environment.  If they are not found
 # (i.e. we are in a test bench, etc.), load the stub versions.
 ##
-from ..dispatch import IoAdapter, LogAdapter, LOG_TRACE, LOG_INFO, LOG_ERROR, LOG_WARNING, LOG_STACK_LIMIT
-from ..dispatch import TREATMENT_MULTICAST_FLOOD
+from ..dispatch import IoAdapter, LogAdapter, LOG_TRACE, LOG_INFO, LOG_ERROR, LOG_WARNING, LOG_STACK_LIMIT, TREATMENT_MULTICAST_FLOOD  # type: ignore[attr-defined]
 
 
 class RouterEngine:
