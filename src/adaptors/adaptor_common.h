@@ -22,13 +22,15 @@
 
 #include "entity.h"
 
-#include "qpid/dispatch/dispatch.h"
+#include "qpid/dispatch/alloc_pool.h"
 #include "qpid/dispatch/threading.h"
 #include "qpid/dispatch/atomic.h"
+#include "qpid/dispatch/atomic.h"
+#include "qpid/dispatch/dispatch.h"
+#include "qpid/dispatch/log.h"
 #include "qpid/dispatch/log.h"
 #include "qpid/dispatch/alloc_pool.h"
-
-#include <proton/tls.h>
+#include "qpid/dispatch/threading.h"
 
 typedef enum {
     QD_AGGREGATION_NONE,
@@ -36,7 +38,8 @@ typedef enum {
     QD_AGGREGATION_MULTIPART
 } qd_http_aggregation_t;
 
-typedef struct qd_adaptor_config_t qd_adaptor_config_t;
+typedef struct qd_adaptor_config_t     qd_adaptor_config_t;
+
 
 struct qd_adaptor_config_t
 {
@@ -54,29 +57,9 @@ struct qd_adaptor_config_t
     bool               verify_host_name;
 };
 
-
 ALLOC_DECLARE(qd_adaptor_config_t);
 
 qd_error_t qd_load_adaptor_config(qd_dispatch_t *qd, qd_adaptor_config_t *config, qd_entity_t* entity, qd_log_source_t *log_source);
 void qd_free_adaptor_config(qd_adaptor_config_t *config);
-
-/**
- * Configure a connection's pn_tls objects
- *     Info log describes objects being configured
- * On success:
- *     tls_config and tls_session are set up
- * On failure:
- *     Error log is written
- *     All in-progress pn_tls objects are destroyed
- */
-bool qd_tls_initial_setup(qd_adaptor_config_t *config,
-                          qd_dispatch_t       *qd,
-                          pn_tls_config_t     **tls_config,
-                          pn_tls_t            **tls_session,
-                          qd_log_source_t     *log_source,
-                          uint64_t             conn_id,
-                          bool                 is_listener,
-                          bool                *tls_has_output,
-                          const char          *protocols[]);
 
 #endif // __adaptor_common_h__
