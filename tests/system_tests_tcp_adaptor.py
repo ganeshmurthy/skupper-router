@@ -1017,11 +1017,15 @@ class TcpAdaptor(TestCase):
                  port,
                  logger,
                  expect=Process.EXIT_OK,
-                 timeout=10,
+                 timeout=10, # Process timeout
                  data=b'abcd',
                  use_ssl=False,
-                 use_client_cert=False):
+                 use_client_cert=False,
+                 ncat_timeout=None):
         ncat_cmd = ['ncat', 'localhost', str(port)]
+        if ncat_timeout:
+            ncat_cmd.append("--wait")
+            ncat_cmd.append(str(ncat_timeout))
         if use_ssl:
             ncat_cmd.append('--ssl-trustfile')
             ncat_cmd.append(CA_CERT)
@@ -1045,14 +1049,19 @@ class TcpAdaptor(TestCase):
                             if out or err else str(e))
         return out
 
-    def ncat_runner(self, tname, client, server, logger, ncat_port=None, use_ssl=False, use_client_cert=False):
+    def ncat_runner(self, tname, client, server, logger,
+                    ncat_port=None,
+                    use_ssl=False,
+                    use_client_cert=False,
+                    ncat_timeout=None):
         name = "%s_%s_%s" % (tname, client, server)
         logger.log(name + " Start")
         ncat_port =  ncat_port if ncat_port else TcpAdaptor.tcp_client_listener_ports[client][server]
         out = self.run_ncat(ncat_port, logger,
                             data=b'abcd',
                             use_ssl=use_ssl,
-                            use_client_cert=use_client_cert)
+                            use_client_cert=use_client_cert,
+                            ncat_timeout=ncat_timeout)
         logger.log("run_ncat returns: '%s'" % out)
         assert len(out) > 0
         assert "abcd" in out

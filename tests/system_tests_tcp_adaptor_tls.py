@@ -73,19 +73,17 @@ class TcpTlsAdaptor(TcpAdaptor):
         # Run ncat on a port which is associated with an sslProfile that has a bad cert filename.
         # The router should try to start TLS and then fail because of the bad certfile and immediately close
         # the client connection.
-        error_log = "unable to set tls trusted certificates"
-        test_passed = True
+        error_log = "listener tcpListener/localhost:" + str(self.wrong_path_in_ssl_profile_port) + " unable to set tls trusted certificates"
         try:
             self.ncat_runner(name, client="INTA",
                              server="INTA",
                              logger=self.logger,
                              ncat_port=self.wrong_path_in_ssl_profile_port,
                              use_ssl=True,
-                             use_client_cert=False)
+                             use_client_cert=False,
+                             ncat_timeout=7)
         except Exception as e:
-            test_passed = False
             print(e)
 
-        self.assertTrue(test_passed)
         self.INTA.wait_log_message(error_log)
         self.logger.log("TCP_TEST TLS Stop %s SUCCESS" % name)
