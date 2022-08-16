@@ -74,6 +74,7 @@ class TcpTlsAdaptor(TcpAdaptor):
         # The router should try to start TLS and then fail because of the bad certfile and immediately close
         # the client connection.
         error_log = "unable to set tls trusted certificates"
+        test_passed = True
         try:
             self.ncat_runner(name, client="INTA",
                              server="INTA",
@@ -82,9 +83,9 @@ class TcpTlsAdaptor(TcpAdaptor):
                              use_ssl=True,
                              use_client_cert=False)
         except Exception as e:
+            test_passed = False
             print(e)
-            pass
 
+        self.assertTrue(test_passed)
         self.INTA.wait_log_message(error_log)
-
         self.logger.log("TCP_TEST TLS Stop %s SUCCESS" % name)
