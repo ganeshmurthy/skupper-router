@@ -1017,7 +1017,7 @@ class TcpAdaptor(TestCase):
                  port,
                  logger,
                  expect=Process.EXIT_OK,
-                 timeout=10, # Process timeout
+                 timeout=10,  # Process timeout
                  data=b'abcd',
                  use_ssl=False,
                  use_client_cert=False,
