@@ -83,7 +83,7 @@ Source0: {{{ git_dir_pack }}}
 Source1: https://www.apache.org/dist/qpid/proton/%{proton_vendored_version}/qpid-proton-%{proton_vendored_version}.tar.gz
 
 %description
-A lightweight message router, written in C and built on Qpid Proton, that provides flexible and scalable interconnect backend for Skupper.io Level 7 Virtual Application Network.
+A lightweight message router that provides flexible and scalable backend for Skupper.io.
 
 %prep
 {{{ git_dir_setup_macro }}}
@@ -117,6 +117,11 @@ cd %{_builddir}/skupper-router
 %install
 cd %{_builddir}/skupper-router
 %cmake_install
+
+for file in %{buildroot}/usr/lib/skupper-router/tests/ssl_certs/{gencerts_openssl,gencerts}.sh; do
+   chmod a+x $file
+done
+chmod a+x %{buildroot}/usr/lib/skupper-router/tests/config-2/gencerts.sh
 
 %check
 cd %{_builddir}/skupper-router
@@ -197,4 +202,5 @@ BuildArch: noarch
 %license /usr/share/doc/skupper-router/LICENSE
 
 %changelog
-{{{ git_dir_changelog }}}
+* Thu Apr 28 2022 Jiri Danek <jdanek@redhat.com> 2.0.2
+- Initial checkin
