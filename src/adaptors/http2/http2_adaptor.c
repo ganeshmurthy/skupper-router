@@ -673,17 +673,6 @@ static int send_data_callback(nghttp2_session *session,
             }
         }
     }
-    else if (length == 0 && stream_data->out_msg_data_flag_eof) {
-        if (require_tls) {
-            qd_adaptor_buffer_t *http2_buff = qd_adaptor_buffer();
-            DEQ_INSERT_TAIL(local_buffs, http2_buff);
-            memcpy(qd_adaptor_buffer_cursor(http2_buff), framehd, HTTP2_DATA_FRAME_HEADER_LENGTH);
-            qd_adaptor_buffer_insert(http2_buff, HTTP2_DATA_FRAME_HEADER_LENGTH);
-        }
-        else {
-            qd_adaptor_buffer_list_append(&(conn->buffs), framehd, HTTP2_DATA_FRAME_HEADER_LENGTH);
-        }
-    }
 
     //
     // If the message has a footer, don't flush the buffers now. Flush them after you write out the footer.
