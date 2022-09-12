@@ -117,4 +117,19 @@ static inline void qd_adaptor_buffer_insert(qd_adaptor_buffer_t *buf, size_t len
     assert(buf->size <= QD_ADAPTOR_MAX_BUFFER_SIZE);
 }
 
+/**
+ *
+ */
+void qd_adaptor_buffer_pn_raw_buffer(pn_raw_buffer_t *pn_raw_buffer, const qd_adaptor_buffer_t *adaptor_buf);
+
+/**
+ *
+ */
+qd_adaptor_buffer_t *qd_adaptor_buffer_raw(pn_raw_buffer_t *pn_raw_buffer);
+
+/**
+ *
+ */
+qd_adaptor_buffer_t *qd_get_adaptor_buffer_from_pn_raw_buffer(const pn_raw_buffer_t *pn_raw_buffer);
+
 #endif  // __adaptor_buffer_h__
