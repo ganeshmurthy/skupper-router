@@ -80,14 +80,6 @@ static bool schedule_activation(qdr_http2_connection_t *conn, qd_duration_t msec
 static void cancel_activation(qdr_http2_connection_t *conn);
 static void setup_qd_tls(qdr_http2_connection_t *conn);
 
-static qdr_connection_info_t *get_connection_info(qdr_http2_connection_t *conn)
-{
-    qdr_connection_info_t *connection_info = 0;
-    if (conn->qdr_conn)
-        connection_info = conn->qdr_conn->connection_info;
-    return connection_info;
-}
-
 static void grant_read_buffers(qdr_http2_connection_t *conn, const char *msg)
 {
     if (IS_ATOMIC_FLAG_SET(&conn->raw_closed_read))
@@ -1782,7 +1774,7 @@ static void http_connector_establish(qdr_http2_connection_t *conn)
     if (conn->require_tls) {
         // Create the qd_tls_t object
         conn->tls =
-            qd_tls(conn, conn->conn_id, http2_adaptor->log_source, get_connection_info(conn));
+            qd_tls(conn, conn->conn_id, http2_adaptor->log_source);
         bool tls_setup_success = qd_tls_start(conn->tls,
                                               conn->config->adaptor_config,
                                               qd_server_dispatch(conn->server),
@@ -2775,7 +2767,7 @@ static void encrypt_outgoing_tls(qdr_http2_connection_t *conn, qd_adaptor_buffer
 static void setup_qd_tls(qdr_http2_connection_t *conn)
 {
     // Create the qd_tls_t object
-    conn->tls    = qd_tls(conn, conn->conn_id, http2_adaptor->log_source, get_connection_info(conn));
+    conn->tls    = qd_tls(conn, conn->conn_id, http2_adaptor->log_source);
     bool success = qd_tls_start(conn->tls, conn->config->adaptor_config, qd_server_dispatch(conn->server),
                                 conn->listener ? true : false, protocols);
     if (success) {

@@ -161,14 +161,6 @@ static void qdr_tcp_connection_ingress_accept(qdr_tcp_connection_t *tc);
 static void handle_outgoing(qdr_tcp_connection_t *conn);
 static void encrypt_outgoing_tls(qdr_tcp_connection_t *conn, qd_adaptor_buffer_t *unencrypted_buff, bool write_buffers);
 
-static qdr_connection_info_t *get_connection_info(qdr_tcp_connection_t *conn)
-{
-    qdr_connection_info_t *connection_info = 0;
-    if (conn->qdr_conn)
-        connection_info = conn->qdr_conn->connection_info;
-    return connection_info;
-}
-
 // is the incoming byte window full
 //
 inline static bool read_window_full(const qdr_tcp_connection_t* conn)
@@ -289,10 +281,9 @@ int copy_decrypted_adaptor_buffs_to_qd_buffs(qdr_tcp_connection_t *conn, qd_adap
     int                  bytes_copied = 0;
     qd_adaptor_buffer_t *adaptor_buff = DEQ_HEAD(*decrypted_buffs);
     while (adaptor_buff) {
-        pn_raw_buffer_t pn_raw_buffer;
-        qd_adaptor_buffer_pn_raw_buffer(&pn_raw_buffer, adaptor_buff);
-        bytes_copied += pn_raw_buffer.size;
-        qd_buffer_list_append(buffers, (uint8_t *) (pn_raw_buffer.bytes + pn_raw_buffer.offset), pn_raw_buffer.size);
+        size_t adaptor_buffer_size = qd_adaptor_buffer_size(adaptor_buff);
+        bytes_copied += adaptor_buffer_size;
+        qd_buffer_list_append(buffers, (uint8_t *) qd_adaptor_buffer_base(adaptor_buff), adaptor_buffer_size);
         DEQ_REMOVE_HEAD(*decrypted_buffs);
         free_qd_adaptor_buffer_t(adaptor_buff);
         adaptor_buff = DEQ_HEAD(*decrypted_buffs);
@@ -958,7 +949,7 @@ static void set_vflow_string(qdr_tcp_connection_t *conn)
 static void setup_qd_tls(qdr_tcp_connection_t *conn)
 {
     // Create the qd_tls_t object
-    conn->tls    = qd_tls(conn, conn->conn_id, tcp_adaptor->log_source, get_connection_info(conn));
+    conn->tls    = qd_tls(conn, conn->conn_id, tcp_adaptor->log_source);
     bool success = qd_tls_start(conn->tls, conn->config->adaptor_config, qd_server_dispatch(conn->server),
                                 conn->listener ? true : false, 0);
     if (success) {
@@ -1383,7 +1374,7 @@ static qdr_tcp_connection_t *qdr_tcp_connection_egress(qd_tcp_connector_t      *
             // Since TLS is required on this connection, try to initialize TLS attributes
             // from the associated sslProfile.
             conn->tls =
-                qd_tls(conn, conn->conn_id, tcp_adaptor->log_source, get_connection_info(conn));
+                qd_tls(conn, conn->conn_id, tcp_adaptor->log_source);
             bool success = qd_tls_start(conn->tls,
                                         conn->config->adaptor_config,
                                         qd_server_dispatch(conn->server),

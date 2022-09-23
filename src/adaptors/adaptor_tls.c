@@ -32,15 +32,13 @@ ALLOC_DEFINE(qd_tls_t);
 
 qd_tls_t *qd_tls(void                  *context,
                  uint64_t               conn_id,
-                 qd_log_source_t       *log_source,
-                 qdr_connection_info_t *connection_info)
+                 qd_log_source_t       *log_source)
 {
     qd_tls_t *tls = new_qd_tls_t();
     ZERO(tls);
     tls->user_context    = context;
     tls->conn_id         = conn_id;
     tls->log_source      = log_source;
-    tls->connection_info = connection_info;
     return tls;
 }
 

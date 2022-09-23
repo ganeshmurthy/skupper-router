@@ -35,20 +35,17 @@ struct qd_tls_t {
     pn_tls_t              *tls_session;
     pn_tls_config_t       *tls_config;
     void                  *user_context;
-    qdr_connection_info_t *connection_info;
     qd_log_source_t       *log_source;
     uint64_t               conn_id;
     bool                   tls_has_output;
     bool                   tls_error;
-    bool                   alpn_check_complete;
 };
 
 ALLOC_DECLARE(qd_tls_t);
 
 qd_tls_t *qd_tls(void                  *context,
                  uint64_t               conn_id,
-                 qd_log_source_t       *log_source,
-                 qdr_connection_info_t *connection_info);
+                 qd_log_source_t       *log_source);
 
 /**
  * Configure proton pn_tls objects using passed in config
