@@ -39,6 +39,10 @@ jobs:
         run: |
           export PROJECT_TAG="${DOCKER_TAG}"
           export VERSION="${DOCKER_TAG}"
+          # The version of proton is hard coded here
+          # When a new version of proton is released, set PROTON_VERSION
+          # to the next version.
+          export PROTON_VERSION="0.37.0"
           # This is a release build which means we need to push the :latest tag
           # to the container repo.
           export PUSH_LATEST=true

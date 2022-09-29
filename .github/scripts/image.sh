@@ -29,10 +29,15 @@ if [ -z "$PROJECT_TAG" ]; then
   PROJECT_TAG=main
 fi
 
+if [ -z "$PROTON_VERSION" ]; then
+  PROTON_VERSION=main
+fi
+
+
 # Building the skupper-router image
 # Pass the VERSION as a build argument so Containerfile can use it when calling compile.sh
 # This version is passed in as a -DVERSION build parameter when building skupper-router.
-${DOCKER} build --build-arg VERSION=$VERSION -t ${PROJECT_NAME}:${PROJECT_TAG}  -f ./Containerfile .
+${DOCKER} build --build-arg PROTON_VERSION=$PROTON_VERSION --build-arg VERSION=$VERSION -t ${PROJECT_NAME}:${PROJECT_TAG}  -f ./Containerfile .
 
 # Pushing only when credentials available
 if [[ -n "${DOCKER_USER}" && -n "${DOCKER_PASSWORD}" ]]; then
