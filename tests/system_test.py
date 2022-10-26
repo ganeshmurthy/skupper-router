@@ -841,16 +841,19 @@ class Qdrouterd(Process):
             assert retry(lambda c=c: self.is_connected(port=c['port'], host=c.get('host') if c.get('host') else self.get_host(c.get('socketAddressFamily'))),
                          **retry_kwargs), "Port not connected %s" % c['port']
 
-    def wait_log_message(self, pattern, logfile_path=None, **retry_kwargs):
-        """Wait for a log message matching the pattern to appear in the routers
-        log file. The log file for the DEFAULT log module is used unless
+    def wait_log_message(self, pattern, logfile_path=None, num_occurrence=1, **retry_kwargs):
+        """Wait for a log message to appear num_occurrence times in the router's log file matching the pattern.
+        The log file for the DEFAULT log module is used unless
         overridden via the (fully qualified) logfile_path parameter
         """
-        def _is_pattern_present(f: TextIO) -> bool:
+        def _is_pattern_present(f: TextIO, num_times=1) -> bool:
+            count = 0
             for line in f:
                 m = re.search(pattern, line)
                 if m:
-                    return True
+                    count += 1
+                    if count == num_times:
+                        return True
             return False
 
         logfile_path = logfile_path or self.logfile_path
@@ -859,7 +862,7 @@ class Qdrouterd(Process):
         assert retry(lambda: pathlib.Path(logfile_path).is_file(), **retry_kwargs), \
             f"Router logfile {logfile_path} does not exist or is not a file"
         with open(logfile_path, 'rt') as router_log:
-            assert retry(lambda: _is_pattern_present(router_log), **retry_kwargs),\
+            assert retry(lambda: _is_pattern_present(router_log, num_times=num_occurrence), **retry_kwargs),\
                 f"'{pattern}' not present in router log"
 
     def wait_startup_message(self, **retry_kwargs):
@@ -987,6 +990,11 @@ class Qdrouterd(Process):
         return os.path.join(self.outdir, self.logfile)
 
 
+class NcatException(Exception):
+    def __init__(self, error=None):
+        super(NcatException, self).__init__(error)
+
+
 class Tester:
     """Tools for use by TestCase
 - Create a directory for the test.
@@ -1009,7 +1017,6 @@ class Tester:
         """
         self.directory = os.path.join(self.root_dir, *id.split('.')) if id else None
         self.cleanup_list = []
-
         self.port_file = pathlib.Path(self.top_dir, "next_port.lock").open("a+t")
         self.cleanup(self.port_file)
 
@@ -1096,6 +1103,44 @@ class Tester:
 
     def http2server(self, *args, **kwargs):
         return self.cleanup(Http2Server(*args, **kwargs))
+
+    def ncat(self,
+             port,
+             logger,
+             name="ncat",
+             expect=Process.EXIT_OK,
+             timeout=TIMEOUT,
+             data=b'abcd',
+             ssl_info=None):
+        ncat_cmd = ['ncat', 'localhost', str(port)]
+        if ssl_info:
+            ca_cert = ssl_info.get('CA_CERT')
+            if ca_cert:
+                ncat_cmd.append('--ssl-trustfile')
+                ncat_cmd.append(ca_cert)
+            client_cert = ssl_info.get('CLIENT_CERTIFICATE')
+            if client_cert:
+                ncat_cmd.append('--ssl-cert')
+                ncat_cmd.append(client_cert)
+            client_cert_key = ssl_info.get('CLIENT_PRIVATE_KEY')
+            if client_cert_key:
+                ncat_cmd.append('--ssl-key')
+                ncat_cmd.append(client_cert_key)
+        logger.log(f"Starting ncat {ncat_cmd} and input len={len(data)}, name={name}")
+        p = self.popen(ncat_cmd,
+                       stdin=PIPE,
+                       stdout=PIPE,
+                       stderr=PIPE,
+                       expect=expect,
+                       name=name)
+        out, err = p.communicate(input=data, timeout=timeout)
+        try:
+            p.teardown()
+        except Exception as e:
+            raise NcatException("ncat failed:"
+                                " stdout='%s' stderr='%s' returncode=%d" % (out, err, p.returncode)
+                                if out or err else str(e))
+        return out, err
 
     def get_port(self, socket_address_family: str = 'IPv4') -> int:
         """Get an unused port"""
