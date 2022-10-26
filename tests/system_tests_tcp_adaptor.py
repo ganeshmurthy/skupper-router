@@ -71,6 +71,7 @@ SERVER_PRIVATE_KEY_PASSWORD = 'server-password'
 CLIENT_CERTIFICATE = RouterTestSslBase.ssl_file('client-certificate.pem')
 CLIENT_PRIVATE_KEY = RouterTestSslBase.ssl_file('client-private-key.pem')
 CLIENT_PRIVATE_KEY_NO_PASS = RouterTestSslBase.ssl_file('client-private-key-no-pass.pem')
+BAD_CA_CERT = RouterTestSslBase.ssl_file('bad-ca-certificate.pem')
 CLIENT_PRIVATE_KEY_PASSWORD = 'client-password'
 CA_CERT = RouterTestSslBase.ssl_file('ca-certificate.pem')
 
@@ -162,12 +163,12 @@ class EchoClientRunner:
                                     print_to_console=self.print_client_logs,
                                     save_for_dump=False,
                                     ofilename=os.path.join(parent_path, "setUpClass/TcpAdaptor_echo_client_%s.log" % self.name))
-        ssl_info = None
+        self.ssl_info = None
         if test_ssl:
-            ssl_info = {'CLIENT_CERTIFICATE': RouterTestSslBase.ssl_file('client-certificate.pem'),
-                        'CLIENT_PRIVATE_KEY': RouterTestSslBase.ssl_file('client-private-key.pem'),
-                        'CLIENT_PRIVATE_KEY_PASSWORD': 'client-password',
-                        'CA_CERT': RouterTestSslBase.ssl_file('ca-certificate.pem')}
+            self.ssl_info = {'CLIENT_CERTIFICATE': CLIENT_CERTIFICATE,
+                             'CLIENT_PRIVATE_KEY': CLIENT_PRIVATE_KEY,
+                             'CLIENT_PRIVATE_KEY_PASSWORD': CLIENT_PRIVATE_KEY_PASSWORD,
+                             'CA_CERT': CA_CERT}
 
         try:
             self.e_client = TcpEchoClient(prefix=self.client_prefix,
@@ -177,7 +178,7 @@ class EchoClientRunner:
                                           count=self.count,
                                           timeout=self.timeout,
                                           logger=self.client_logger,
-                                          ssl_info=ssl_info)
+                                          ssl_info=self.ssl_info)
 
         except Exception as exc:
             self.e_client.error = "TCP_TEST TcpAdaptor_runner_%s failed. Exception: %s" % \
@@ -382,11 +383,18 @@ class TcpAdaptorBase(TestCase):
                             ofilename=os.path.join(parent_path, "setUpClass/TcpAdaptor.log"))
         # Write a dummy log line for scraper.
         cls.logger.log("SERVER (info) Container Name: TCP_TEST")
-        ssl_info = None
+        cls.ssl_info = None
+        cls.client_ssl_info = {}
         if cls.test_ssl:
-            ssl_info = {'SERVER_CERTIFICATE': SERVER_CERTIFICATE,
-                        'SERVER_PRIVATE_KEY': SERVER_PRIVATE_KEY_NO_PASS,
-                        'CA_CERT': CA_CERT}
+            cls.ssl_info = {'SERVER_CERTIFICATE': SERVER_CERTIFICATE,
+                            'SERVER_PRIVATE_KEY': SERVER_PRIVATE_KEY_NO_PASS,
+                            'CA_CERT': CA_CERT}
+            cls.client_ssl_info = {'CLIENT_CERTIFICATE': CLIENT_CERTIFICATE,
+                                   'CLIENT_PRIVATE_KEY': CLIENT_PRIVATE_KEY,
+                                   'CLIENT_PRIVATE_KEY_PASSWORD': 'client-password',
+                                   'BAD_CA_CERT': BAD_CA_CERT,
+                                   'CLIENT_PRIVATE_KEY_NO_PASS': CLIENT_PRIVATE_KEY_NO_PASS,
+                                   'CA_CERT': CA_CERT}
 
         # Start echo servers first, store their listening port numbers
         parent_path = os.path.dirname(os.getcwd())
@@ -401,7 +409,7 @@ class TcpAdaptorBase(TestCase):
             server = TcpEchoServer(prefix=server_prefix,
                                    port=0,
                                    logger=server_logger,
-                                   ssl_info=ssl_info)
+                                   ssl_info=cls.ssl_info)
             assert server.is_running
             cls.tcp_server_listener_ports[rtr] = server.port
             cls.echo_servers[rtr] = server
@@ -417,7 +425,7 @@ class TcpAdaptorBase(TestCase):
                                port=0,
                                logger=server_logger,
                                conn_stall=Q2_DELAY_SECONDS,
-                               ssl_info=ssl_info)
+                               ssl_info=cls.ssl_info)
         assert server.is_running
         cls.EC2_conn_stall_connector_port = server.port
         cls.echo_server_NS_CONN_STALL = server
@@ -433,6 +441,9 @@ class TcpAdaptorBase(TestCase):
 
         inter_router_port_AB = cls.tester.get_port()
         cls.authenticate_peer_port = cls.tester.get_port()
+        cls.bad_server_port = cls.tester.get_port()
+        cls.good_server_port = cls.tester.get_port()
+        cls.bad_cert_port = cls.tester.get_port()
         cls.wrong_path_in_ssl_profile_port = cls.tester.get_port()
         cls.INTA_edge_port = cls.tester.get_port()
         cls.INTA_conn_stall_listener_port = cls.tester.get_port()
@@ -443,6 +454,7 @@ class TcpAdaptorBase(TestCase):
                                          'address': 'NS_EC2_CONN_STALL', 'siteId': cls.site})]
 
         if cls.test_ssl:
+            # This listener will be used to test the authenticatePeer functionality.
             int_a_config.append(('tcpListener',
                                  {'host': "localhost",
                                   'port': cls.authenticate_peer_port,
@@ -593,7 +605,7 @@ class TcpAdaptorBase(TestCase):
                 # examine what this router can see; signal poll loop to continue or not
                 lines = out.split("\n")
                 server_lines = [line for line in lines if "mobile" in line and "ES_" in line]
-                if not len(server_lines) == len(cls.router_order):
+                if len(server_lines) < len(cls.router_order):
                     found_all = False
                     seen = []
                     for line in server_lines:
@@ -1037,83 +1049,112 @@ class CommonTcpTests:
         # Declare success
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
-    def run_ncat(self,
-                 port,
-                 logger,
-                 name="run_ncat",
-                 expect=Process.EXIT_OK,
-                 timeout=10,
-                 data=b'abcd',
-                 use_ssl=False,
-                 use_client_cert=False):
-        ncat_cmd = ['ncat', 'localhost', str(port)]
-        if use_ssl:
-            ncat_cmd.append('--ssl-trustfile')
-            ncat_cmd.append(CA_CERT)
-            if use_client_cert:
-                ncat_cmd.append('--ssl-cert')
-                ncat_cmd.append(CLIENT_CERTIFICATE)
-                ncat_cmd.append('--ssl-key')
-                ncat_cmd.append(CLIENT_PRIVATE_KEY_NO_PASS)
-        if len(data) > 4:
-            logger.log(f"Starting ncat {ncat_cmd} and large input len={len(data)}, name={name}")
-        else:
-            logger.log(f"Starting ncat {ncat_cmd} and input {data}, name={name}")
-        p = self.popen(
-            ncat_cmd,
-            stdin=PIPE, stdout=PIPE, stderr=PIPE, expect=expect, name=name)
-        out, err = p.communicate(input=data, timeout=timeout)
-        try:
-            p.teardown()
-        except Exception as e:
-            raise Exception("ncat failed:"
-                            " stdout='%s' stderr='%s' returncode=%d" % (out, err, p.returncode)
-                            if out or err else str(e))
-        return out
+    def _ncat_runner(self, name, client, server, data=b'abcd', port=None, ssl_info=None):
+        def get_full_test_name(test_name, client_name, server_name):
+            full_test_name = "%s_%s_%s" % (test_name, client_name, server_name)
+            return full_test_name
 
-    def ncat_runner(self, tname, client, server, logger,
-                    ncat_port=None,
-                    use_ssl=False,
-                    use_client_cert=False,
-                    use_large_msg=False):
-        name = "%s_%s_%s" % (tname, client, server)
-        logger.log(name + " Start")
-        ncat_port = ncat_port if ncat_port else TcpAdaptor.tcp_client_listener_ports[client][server]
+        if not ssl_info:
+            ssl_info = {}
+            if self.client_ssl_info.get('CA_CERT'):
+                ssl_info['CA_CERT'] = self.client_ssl_info.get('CA_CERT')
 
-        large_msg = b'G' * 20000 + b'END OF TRANSMISSION'
-        data = b'abcd'
-
-        out = self.run_ncat(ncat_port, logger,
-                            data=large_msg if use_large_msg else data,
-                            use_ssl=use_ssl,
-                            use_client_cert=use_client_cert,
-                            name=name)
-        if use_large_msg:
-            logger.log(f"run_ncat large_msg returns length: {len(out)}")
-        else:
-            logger.log("run_ncat returns: '%s'" % out)
-        assert len(out) > 0
-        if use_large_msg:
-            self.assertEqual(len(large_msg), len(out))
-        else:
-            assert data in out
-        logger.log(tname + " Stop")
+        out, err = self.ncat(port=port if port else TcpAdaptor.tcp_client_listener_ports[client][server],
+                             logger=self.logger,
+                             name=get_full_test_name(name, client, server),
+                             expect=Process.EXIT_OK,
+                             timeout=TIMEOUT,
+                             data=data,
+                             ssl_info=ssl_info)
+        return out, err
 
     # half-closed handling
-    def test_70_half_closed(self):
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_70_half_closed_INTA_INTA(self):
         if DISABLE_SELECTOR_TESTS:
             self.skipTest(DISABLE_SELECTOR_REASON)
-        if not ncat_available():
-            self.skipTest("Ncat utility is not available")
-        name = "test_70_half_closed"
+        name = "test_70_half_closed_INTA_INTA"
         self.logger.log("TCP_TEST Start %s" % name)
-        self.ncat_runner(name, "INTA", "INTA", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "INTA", "INTB", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "INTA", "INTC", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "EA1", "EA1", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "EA1", "EB1", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "EA1", "EC2", self.logger, use_ssl=self.test_ssl)
-        self.ncat_runner(name, "EA1", "EC2", self.logger, use_ssl=self.test_ssl, use_large_msg=True)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "INTA", "INTA", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_71_half_closed_INTA_INTB(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_71_half_closed_INTA_INTB"
+        self.logger.log("TCP_TEST Start %s" % name)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "INTA", "INTB", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_72_half_closed_INTA_INTC(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_72_half_closed_INTA_INTC"
+        self.logger.log("TCP_TEST Start %s" % name)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "INTA", "INTC", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_73_half_closed_EA1_EA1(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_73_half_closed_EA1_EA1"
+        self.logger.log("TCP_TEST Start %s" % name)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "EA1", "EA1", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_74_half_closed_EA1_EB1(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_74_half_closed_EA1_EB1"
+        self.logger.log("TCP_TEST Start %s" % name)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "EA1", "EB1", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_75_half_closed_EA1_EC2(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_75_half_closed_EA1_EC2"
+        self.logger.log("TCP_TEST Start %s" % name)
+        data = b'abcd'
+        out, _ = self._ncat_runner(name, "EA1", "EC2", data)
+        self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_76_half_closed_EA1_EC2_large_message(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_76_half_closed_EA1_EC2_large_message"
+        self.logger.log("TCP_TEST Start %s" % name)
+        large_msg = b'G' * 40000 + b'END OF TRANSMISSION'
+        out, _ = self._ncat_runner(name, "EA1", "EC2", large_msg)
+        self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
+        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+    def test_77_half_closed_INTA_INTC_large_message(self):
+        if DISABLE_SELECTOR_TESTS:
+            self.skipTest(DISABLE_SELECTOR_REASON)
+        name = "test_77_half_closed_INTA_INTC_large_message"
+        self.logger.log("TCP_TEST Start %s" % name)
+        large_msg = b'G' * 40000 + b'END OF TRANSMISSION'
+        out, _ = self._ncat_runner(name, "INTA", "INTC", large_msg)
+        self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
     # connector/listener stats
@@ -1132,7 +1173,8 @@ class CommonTcpTests:
                 assert "connectionsOpened" in output
                 # There is a listener with authenticatePeer:yes and we have not run any tests on it yet, so
                 # it is allowed to have zero connectionsOpened
-                if output['address'] != 'ES_INTA':
+                if output['address'] != 'ES_INTA' and output['address'] != 'ES_BAD_CONNECTOR_CERT_INTA' \
+                        and output['address'] != 'ES_GOOD_CONNECTOR_CERT_INTA':
                     assert output["connectionsOpened"] > 0
                 assert output["bytesIn"] == output["bytesOut"]
         self.assertEqual(es_inta_connections_opened, 7)
