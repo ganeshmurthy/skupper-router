@@ -254,10 +254,14 @@ class TcpTlsGoodListenerBadClient(TestCase):
             # In some CI test runs, the NcatException is raised.
             # In other cases no exception is raised
             # So, assertRaises cannot be used.
-            expected_error = "Ncat: Input/output error"
+            expected_error1 = "Ncat: Input/output error" # This error happens in F36
+            expected_error2 = "Ncat: Connection refused" # This error happens in F35 and lower
             actual_error = str(e)
-            self.assertIn(expected_error, actual_error, f"Expected error message not found. "
-                                                        f"Expected {expected_error} but got {actual_error}")
+            error_found = False
+            if expected_error1 in actual_error or expected_error2 in actual_error:
+                error_found = True
+            self.assertTrue(error_found, f"Expected error message not found. "
+                                         f"Expected {expected_error1} or  {expected_error2} but got {actual_error}")
 
         # Look for a log line that says "certificate unknown"
         self.router.wait_log_message("certificate unknown|unknown ca")
