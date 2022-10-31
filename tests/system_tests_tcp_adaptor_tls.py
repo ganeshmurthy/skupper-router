@@ -254,8 +254,8 @@ class TcpTlsGoodListenerBadClient(TestCase):
             # In some CI test runs, the NcatException is raised.
             # In other cases no exception is raised
             # So, assertRaises cannot be used.
-            expected_error1 = "Ncat: Input/output error" # This error happens in F36
-            expected_error2 = "Ncat: Connection refused" # This error happens in F35 and lower
+            expected_error1 = "Ncat: Input/output error"  # This error happens in F36
+            expected_error2 = "Ncat: Connection refused"  # This error happens in F35 and lower
             actual_error = str(e)
             error_found = False
             if expected_error1 in actual_error or expected_error2 in actual_error:
