@@ -263,23 +263,23 @@ class TcpTlsGoodListenerBadClient(TestCase):
         self.router.wait_log_message("certificate unknown|unknown ca")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
-    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
-    def test_connector_bad_server_cert(self):
-        name = "test_connector_bad_server_cert"
-        full_name = "%s_%s_%s" % (name, "INTA", "INTA")
-        self.logger.log("TCP_TEST TLS Start %s" % name)
-        ssl_info = dict()
-        ssl_info['CA_CERT'] = CA_CERT
+#    @unittest.skipIf(not ncat_available(), "Ncat utility is not available")
+#    def test_connector_bad_server_cert(self):
+#        name = "test_connector_bad_server_cert"
+#        full_name = "%s_%s_%s" % (name, "INTA", "INTA")
+#        self.logger.log("TCP_TEST TLS Start %s" % name)
+#        ssl_info = dict()
+#        ssl_info['CA_CERT'] = CA_CERT
         # The ncat client presents a good cert to the good listener.
         # When ncat makes a connection on the tcpListener, the corresponding
         # tcpConnector attempts to make a connection to the echo server
         # by presenting a bad cert to the echo server but the echo server is
         # responding back with a different ca cert that the router cannot verify.
         # Hence the router side TLS fails certificate verification.
-        out, _ = self.ncat(port=self.bad_server_port,
-                           logger=self.logger,
-                           name=full_name,
-                           ssl_info=ssl_info)
-        self.assertEqual(len(out), 0)
-        self.router.wait_log_message("certificate verify failed")
-        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+#        out, _ = self.ncat(port=self.bad_server_port,
+#                           logger=self.logger,
+#                           name=full_name,
+#                           ssl_info=ssl_info)
+#        self.assertEqual(len(out), 0)
+#        self.router.wait_log_message("certificate verify failed")
+#        self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
