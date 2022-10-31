@@ -315,6 +315,15 @@ static int handle_incoming_raw_read(qdr_tcp_connection_t *conn, qd_buffer_list_t
                conn->conn_id, encrypted_bytes_in);
 
         if (encrypted_bytes_in == QD_TLS_ERROR) {
+            if (conn->in_dlv_stream) {
+                qd_log(tcp_adaptor->log_source, QD_LOG_DEBUG,
+                       DLV_FMT
+                       " handle_incoming_raw_read QD_TLS_ERROR close %s in_dlv_stream delivery, setting "
+                       "receive_complete=true",
+                       DLV_ARGS(conn->in_dlv_stream), qdr_tcp_connection_role_name(conn));
+                qd_message_set_receive_complete(qdr_delivery_message(conn->in_dlv_stream));
+                qdr_delivery_continue(tcp_adaptor->core, conn->in_dlv_stream, true);
+            }
             pn_raw_connection_close(conn->pn_raw_conn);
             return 0;
         } else if (DEQ_SIZE(decrypted_buffs) > 0 && buffers && qd_tls_is_secure(conn->tls)) {
