@@ -2101,6 +2101,7 @@ static void qdr_tcp_conn_close(void *context, qdr_connection_t *conn, qdr_error_
         qdr_tcp_connection_t* conn = (qdr_tcp_connection_t*) tcontext;
         qd_log(tcp_adaptor->log_source, QD_LOG_DEBUG,
                "[C%"PRIu64"][L%"PRIu64"] qdr_tcp_conn_close: NOOP", conn->conn_id, qdr_tcp_conn_linkid(conn));
+        pn_raw_connection_close(conn->pn_raw_conn);
     } else {
         qd_log(tcp_adaptor->log_source, QD_LOG_ERROR, "qdr_tcp_conn_close: no connection context");
         assert(false);
