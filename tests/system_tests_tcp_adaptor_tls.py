@@ -17,7 +17,7 @@
 # under the License.
 #
 import os
-from system_test import unittest, TestCase, Qdrouterd, NcatException, Logger
+from system_test import unittest, TestCase, Qdrouterd, NcatException, Logger, Process
 from system_tests_tcp_adaptor import TcpAdaptorBase, CommonTcpTests, ncat_available, \
     CA_CERT, CLIENT_CERTIFICATE, CLIENT_PRIVATE_KEY, CLIENT_PRIVATE_KEY_PASSWORD, \
     SERVER_CERTIFICATE, SERVER_PRIVATE_KEY, SERVER_PRIVATE_KEY_PASSWORD, SERVER_PRIVATE_KEY_NO_PASS, BAD_CA_CERT
@@ -249,6 +249,7 @@ class TcpTlsGoodListenerBadClient(TestCase):
             self.ncat(port=self.good_listener_port,
                       logger=self.logger,
                       name=full_name,
+                      expect=Process.EXIT_FAIL,
                       ssl_info=ssl_info)
         except NcatException as e:
             # In some CI test runs, the NcatException is raised.

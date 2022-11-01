@@ -491,7 +491,7 @@ static int handle_incoming(qdr_tcp_connection_t *conn, const char *msg)
         conn->in_dlv_stream = qdr_link_deliver(conn->incoming_link, msg, 0, false, 0, 0, 0, 0);
 
         qd_log(log, QD_LOG_DEBUG,
-               "[C%" PRIu64 "][L%" PRIu64 "][D%" PRIu32 "] Initiating %s side empty incoming stream message",
+               "[C%" PRIu64 "][L%" PRIu64 "][D%" PRIu32 "] Initiated %s side empty incoming stream message",
                conn->conn_id, conn->incoming_link_id, conn->in_dlv_stream->delivery_id,
                qdr_tcp_connection_role_name(conn));
     }
