@@ -1063,9 +1063,8 @@ static void handle_connection_event(pn_event_t *e, qd_server_t *qd_server, void 
         }
         // If somehow the PN_RAW_CONNECTION_CLOSED_WRITE and the PN_RAW_CONNECTION_CLOSED_READ events did not come by,
         // we will drain the buffers here just as a backup.
-        int drained_buffers = qd_raw_connection_drain_read_write_buffers(conn->pn_raw_conn);
-        qd_log(log, QD_LOG_INFO, "[C%" PRIu64 "] PN_RAW_CONNECTION_DISCONNECTED %s, drained_buffers=%i", conn->conn_id,
-               qdr_tcp_connection_role_name(conn), drained_buffers);
+        qd_log(log, QD_LOG_INFO, "[C%" PRIu64 "] PN_RAW_CONNECTION_DISCONNECTED %s", conn->conn_id,
+               qdr_tcp_connection_role_name(conn));
 
         LOCK(&conn->activation_lock);
         pn_raw_connection_set_context(conn->pn_raw_conn, 0);
