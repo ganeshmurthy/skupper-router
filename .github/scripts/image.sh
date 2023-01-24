@@ -19,9 +19,9 @@
 
 set -exo pipefail
 
-DOCKER=docker
+DOCKER=podman
 PROJECT_NAME=skupper-router
-DOCKER_REGISTRY=quay.io
+DOCKER_REGISTRY=quay.io/ganeshmurthy
 DOCKER_ORG=skupper
 
 # If PROJECT_TAG is not defined set PROJECT_TAG to main

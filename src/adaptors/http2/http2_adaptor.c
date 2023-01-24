@@ -415,7 +415,6 @@ void free_qdr_http2_connection(qdr_http2_connection_t* http_conn, bool on_shutdo
     sys_atomic_destroy(&http_conn->raw_closed_read);
     sys_atomic_destroy(&http_conn->raw_closed_write);
     sys_atomic_destroy(&http_conn->q2_restart);
-    sys_atomic_destroy(&http_conn->delay_buffer_write);
 
     // Free tls related stuff if need be.
     if (http_conn->tls) {
@@ -752,9 +751,7 @@ static ssize_t send_callback(nghttp2_session *session,
         qd_adaptor_buffer_list_append(&(conn->out_buffs), (uint8_t *) data, length);
     }
     qd_log(http2_adaptor->protocol_log_source, QD_LOG_TRACE, "[C%"PRIu64"] HTTP2 send_callback data length %zu", conn->conn_id, length);
-    if (! IS_ATOMIC_FLAG_SET(&conn->delay_buffer_write)) {
-        qd_raw_connection_write_buffers(conn->pn_raw_conn, &conn->out_buffs);
-    }
+    qd_raw_connection_write_buffers(conn->pn_raw_conn, &conn->out_buffs);
     return (ssize_t)length;
 }
 
@@ -1071,7 +1068,7 @@ static void send_settings_frame(qdr_http2_connection_t *conn)
         nghttp2_session_send(conn->session);
         conn->initial_settings_frame_sent = true;
     }
-    // qd_raw_connection_write_buffers(conn->pn_raw_conn, &conn->out_buffs);
+    qd_raw_connection_write_buffers(conn->pn_raw_conn, &conn->out_buffs);
 }
 
 static void _http_record_request(qdr_http2_connection_t *conn, qdr_http2_stream_data_t *stream_data)
@@ -1546,7 +1543,6 @@ qdr_http2_connection_t *qdr_http_connection_ingress(qd_http_listener_t* listener
     sys_atomic_init(&ingress_http_conn->raw_closed_read, 0);
     sys_atomic_init(&ingress_http_conn->raw_closed_write, 0);
     sys_atomic_init(&ingress_http_conn->q2_restart, 0);
-    sys_atomic_init(&ingress_http_conn->delay_buffer_write, 0);
     DEQ_INIT(ingress_http_conn->out_buffs);
     DEQ_INIT(ingress_http_conn->streams);
     ingress_http_conn->data_prd.read_callback = read_data_callback;
@@ -1931,7 +1927,7 @@ uint64_t handle_outgoing_http(qdr_http2_stream_data_t *stream_data)
 
             int stream_id = stream_data->conn->ingress?stream_data->stream_id: -1;
 
-            create_settings_frame(conn);
+            send_settings_frame(conn);
 
             uint8_t flags = 0;
             stream_data->curr_stream_data_result = qd_message_next_stream_data(message, &stream_data->curr_stream_data);
@@ -1958,12 +1954,6 @@ uint64_t handle_outgoing_http(qdr_http2_stream_data_t *stream_data)
                 else {
                     stream_data->curr_stream_data_iter = qd_message_stream_data_iterator(stream_data->curr_stream_data);
                 }
-            }
-
-            // There is a body for this message, set the delay_buffer_write so the buffers are not immediately
-            // pushed out on header submission.
-            if (stream_data->out_msg_has_body) {
-                SET_ATOMIC_FLAG(&conn->delay_buffer_write);
             }
 
             int32_t ret_val = nghttp2_submit_headers(conn->session, flags, stream_id, NULL, hdrs, actual_count, stream_data);
@@ -2047,8 +2037,6 @@ uint64_t handle_outgoing_http(qdr_http2_stream_data_t *stream_data)
             qd_log(http2_adaptor->protocol_log_source, QD_LOG_TRACE, "[C%"PRIu64"][S%"PRId32"] Message has no body", conn->conn_id, stream_data->stream_id);
         }
         stream_data->out_msg_header_sent = true;
-
-        CLEAR_ATOMIC_FLAG(&conn->delay_buffer_write);
 
         if (stream_data->out_msg_has_footer) {
             qd_log(http2_adaptor->protocol_log_source, QD_LOG_TRACE, "[C%"PRIu64"][S%"PRId32"] Message has a footer", conn->conn_id, stream_data->stream_id);
@@ -2349,7 +2337,7 @@ static int handle_incoming_http(qdr_http2_connection_t *conn)
         } else if (DEQ_SIZE(decrypted_buffs) > 0 && qd_tls_is_secure(conn->tls)) {
             if (!conn->alpn_check_complete)
                 close_conn = !is_alpn_protocol_match(conn);
-            if (!close_conn && !conn->initial_settings_frame_sent) {
+            if (!close_conn) {
                 send_settings_frame(conn);
             }
             qd_adaptor_buffer_t *adaptor_buff = DEQ_HEAD(decrypted_buffs);
@@ -2722,7 +2710,6 @@ qdr_http2_connection_t *qdr_http_connection_egress(qd_http_connector_t *connecto
     DEQ_INIT(egress_http_conn->streams);
     sys_atomic_init(&egress_http_conn->raw_closed_read, 0);
     sys_atomic_init(&egress_http_conn->raw_closed_write, 0);
-    sys_atomic_init(&egress_http_conn->delay_buffer_write, 0);
     sys_atomic_init(&egress_http_conn->q2_restart, 0);
 
     sys_mutex_lock(&http2_adaptor->lock);
