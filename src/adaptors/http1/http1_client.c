@@ -248,7 +248,7 @@ static void _handle_listener_accept(qd_adaptor_listener_t *adaptor_listener, pn_
 
     if (hconn->require_tls) {
         // set up a TLS session for this connection
-        hconn->tls = qd_tls(li->tls_domain, hconn, hconn->conn_id, _on_tls_connection_secured);
+        hconn->tls = qd_tls(li->tls_domain, hconn, hconn->conn_id, 0, _on_tls_connection_secured);
         if (!hconn->tls) {
             // see PN_RAW_CONNECTION_CONNECTED handling. Note that qd_tls() will log the error for us.
         }

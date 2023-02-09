@@ -156,7 +156,7 @@ static qdr_http1_connection_t *_create_server_connection(qd_http_connector_t *co
     if (hconn->require_tls) {
         // Pre-create the initial TLS session now. This is done so that if there is a configuration error it can be
         // detected here so the management operation can fail and report the problem to the user.
-        hconn->tls = qd_tls(connector->tls_domain, hconn, hconn->conn_id, _on_tls_connection_secured);
+        hconn->tls = qd_tls(connector->tls_domain, hconn, hconn->conn_id, 0, _on_tls_connection_secured);
         if (!hconn->tls) {
             // TLS was not configured successfully using the details in the connector and SSLProfile. See the logs for
             // additional detail
@@ -833,7 +833,7 @@ static void _handle_connection_events(pn_event_t *e, qd_server_t *qd_server, voi
 
         if (hconn->require_tls && hconn->tls == 0) {
             assert(hconn->server.connector && hconn->server.connector->tls_domain);
-            hconn->tls = qd_tls(hconn->server.connector->tls_domain, hconn, hconn->conn_id, _on_tls_connection_secured);
+            hconn->tls = qd_tls(hconn->server.connector->tls_domain, hconn, hconn->conn_id, 0, _on_tls_connection_secured);
             if (!hconn->tls) {
                 hconn->tls_error = -1;
                 qdr_http1_close_connection(hconn, "Failed to allocate a TLS session");

@@ -66,6 +66,9 @@ const char *tcp_alpn_protocols[TCP_NUM_ALPN_PROTOCOLS] = {"http/1.1", "h2"};
 
 const char *alpn        = "alpn";
 int         alpn_length = 4;
+const char *sni        = "sni";
+int         sni_length = 3;
+
 
 typedef struct qdr_tcp_connection_t qdr_tcp_connection_t;
 
@@ -76,13 +79,14 @@ struct qdr_tcp_connection_t {
     qd_tcp_listener_t    *listener;
     vflow_record_t        *vflow;
     char                 *reply_to;
-    char                     *alpn_protocol;  // The negotiated ALPN protocol. Used only in the case of TLS connections.
+    char                 *alpn_protocol;  // The negotiated ALPN protocol. Used only in the case of TLS connections.
+    char                 *sni_hostname;   // The sni hostname is empty on an ingress connection.
     qdr_connection_t     *qdr_conn;
     uint64_t              conn_id;
     qdr_link_t           *incoming_link;
-    uint64_t                  incoming_link_id;
+    uint64_t             incoming_link_id;
     qdr_link_t           *outgoing_link;
-    uint64_t                  outgoing_link_id;
+    uint64_t             outgoing_link_id;
     pn_raw_connection_t  *pn_raw_conn;
     sys_mutex_t           activation_lock;
     qdr_delivery_t       *in_dlv_stream;
@@ -519,6 +523,15 @@ static int handle_incoming(qdr_tcp_connection_t *conn, const char *msg)
                 qd_log(log, QD_LOG_DEBUG, "[C%" PRIu64 "] %s No ALPN protocol was negotiated", conn->conn_id,
                        qdr_tcp_connection_role_name(conn));
             }
+            char *sni_hostname = qd_tls_get_sni_hostname(conn->tls);
+            if (sni_hostname) {
+                qd_log(tcp_adaptor->log_source, QD_LOG_DEBUG,
+                       "[C%" PRIu64 "] SNI hostname sent in Client Hello %s", conn->conn_id, sni_hostname);
+                qd_compose_insert_string_n(props, (const char *) sni, sni_length);  // key - "sni"
+                qd_compose_insert_string_n(
+                    props, (const char *) sni_hostname,
+                    strlen(sni_hostname));  // value - SNI sent by the client.
+            }
         }
         qd_compose_end_map(props);  // end map
 
@@ -613,6 +626,7 @@ static void free_qdr_tcp_connection(qdr_tcp_connection_t *tc)
     qd_tcp_listener_decref(tc->listener);
     vflow_end_record(tc->vflow);
     free(tc->reply_to);
+    free(tc->sni_hostname);
     free(tc->remote_address);
     free(tc->global_id);
     free(tc->alpn_protocol);
@@ -1026,7 +1040,7 @@ static void handle_connection_event(pn_event_t *e, qd_server_t *qd_server, void 
                    conn->conn_id, conn->config->adaptor_config->host_port, conn->remote_address, conn->global_id);
             if (conn->require_tls) {
                 assert(!conn->tls);
-                conn->tls = qd_tls(conn->listener->tls_domain, conn, conn->conn_id, on_tls_connection_secured);
+                conn->tls = qd_tls(conn->listener->tls_domain, conn, conn->conn_id, 0, on_tls_connection_secured);
                 if (conn->tls) {
                     // a pn_tls_session. Grant read buffers so that we can now start reading the initial TLS handshake
                     // bytes that the client is going to send us.
@@ -1443,7 +1457,7 @@ static bool qdr_tcp_create_egress_connection(qd_tcp_connector_t *connector, qdr_
             }
         }
 
-        tc->tls = qd_tls(connector->tls_domain, tc, tc->conn_id, on_tls_connection_secured);
+        tc->tls = qd_tls(connector->tls_domain, tc, tc->conn_id, tc->sni_hostname, on_tls_connection_secured);
         if (!tc->tls) {
             // There was a failure trying to setup the connector sslProfile.  Look at the logs for failure reason.
             // We cannot proceed setting up this connection, free it.
@@ -1691,40 +1705,40 @@ static void qd_tcp_connector_decref(qd_tcp_connector_t* c)
 
 QD_EXPORT qd_tcp_connector_t *qd_dispatch_configure_tcp_connector(qd_dispatch_t *qd, qd_entity_t *entity)
 {
-    qd_tcp_connector_t *c = qd_tcp_connector(qd->server);
-    if (qd_load_tcp_adaptor_config(c->config, entity) != QD_ERROR_NONE) {
+    qd_tcp_connector_t *connector = qd_tcp_connector(qd->server);
+    if (qd_load_tcp_adaptor_config(connector->config, entity) != QD_ERROR_NONE) {
         qd_log(tcp_adaptor->log_source, QD_LOG_ERROR, "Unable to create tcp connector: %s", qd_error_message());
-        qd_tcp_connector_decref(c);
+        qd_tcp_connector_decref(connector);
         return 0;
     }
 
-    if (c->config->adaptor_config->ssl_profile_name) {
-        c->tls_domain = qd_tls_domain(c->config->adaptor_config, qd, tcp_adaptor->log_source, 0, 0, false);
-        if (!c->tls_domain) {
+    if (connector->config->adaptor_config->ssl_profile_name) {
+        connector->tls_domain = qd_tls_domain(connector->config->adaptor_config, qd, tcp_adaptor->log_source, 0, 0, false);
+        if (!connector->tls_domain) {
             // note qd_tls_domain() logged the error
-            qd_tcp_connector_decref(c);
+            qd_tcp_connector_decref(connector);
             return 0;
         }
     }
 
-    DEQ_ITEM_INIT(c);
-    DEQ_INSERT_TAIL(tcp_adaptor->connectors, c);
-    log_tcp_adaptor_config(tcp_adaptor->log_source, c->config, "TcpConnector");
+    DEQ_ITEM_INIT(connector);
+    DEQ_INSERT_TAIL(tcp_adaptor->connectors, connector);
+    log_tcp_adaptor_config(tcp_adaptor->log_source, connector->config, "TcpConnector");
 
     //
     // Report connector configuration to vflow
     //
-    vflow_set_string(c->vflow, VFLOW_ATTRIBUTE_NAME,             c->config->adaptor_config->name);
-    vflow_set_string(c->vflow, VFLOW_ATTRIBUTE_DESTINATION_HOST, c->config->adaptor_config->host);
-    vflow_set_string(c->vflow, VFLOW_ATTRIBUTE_DESTINATION_PORT, c->config->adaptor_config->port);
-    vflow_set_string(c->vflow, VFLOW_ATTRIBUTE_VAN_ADDRESS,      c->config->adaptor_config->address);
+    vflow_set_string(connector->vflow, VFLOW_ATTRIBUTE_NAME,             connector->config->adaptor_config->name);
+    vflow_set_string(connector->vflow, VFLOW_ATTRIBUTE_DESTINATION_HOST, connector->config->adaptor_config->host);
+    vflow_set_string(connector->vflow, VFLOW_ATTRIBUTE_DESTINATION_PORT, connector->config->adaptor_config->port);
+    vflow_set_string(connector->vflow, VFLOW_ATTRIBUTE_VAN_ADDRESS,      connector->config->adaptor_config->address);
 
-    c->dispatcher_conn = qdr_tcp_create_dispatcher_connection(c, c->config, c->server);
-    if (!c->dispatcher_conn) {
-        qd_tcp_connector_decref(c);
+    connector->dispatcher_conn = qdr_tcp_create_dispatcher_connection(connector, connector->config, connector->server);
+    if (!connector->dispatcher_conn) {
+        qd_tcp_connector_decref(connector);
         return 0;
     }
-    return c;
+    return connector;
 }
 
 QD_EXPORT void qd_dispatch_delete_tcp_connector(qd_dispatch_t *qd, void *impl)
@@ -1928,6 +1942,7 @@ static int qdr_tcp_push(void *context, qdr_link_t *link, int limit)
  * @brief Find the flow-id and the alpn protocol in the message's application properties,
  * If flow-id is available use it as the counterflow reference of the connection's flow record.
  * If alpn protocol is available, set it on the connection.
+ * If sni hostname is available, set it on the connection.
  *
  * @param tc Pointer to the tcp connection state
  * @param msg Pointer to the message received from the ingress (listener) side
@@ -1965,9 +1980,12 @@ static void qdr_process_app_properties(qdr_tcp_connection_t *tc, qd_message_t *m
                     qd_parsed_field_t *alpn_field = qd_parse_sub_value(ap, i);
                     qd_iterator_t     *alpn_iter  = qd_parse_raw(alpn_field);
                     tc->alpn_protocol             = (char *) qd_iterator_copy(alpn_iter);
-                }
+                } else if (!!key_iter && tc->require_tls && qd_iterator_equal(key_iter, (const unsigned char *) sni)) {
+                    qd_parsed_field_t *sni_field = qd_parse_sub_value(ap, i);
+                    qd_iterator_t     *sni_iter  = qd_parse_raw(sni_field);
+                    tc->sni_hostname             = (char *) qd_iterator_copy(sni_iter);
+               }
             }
-
             if (!!id_value) {
                 vflow_set_ref_from_parsed(tc->vflow, VFLOW_ATTRIBUTE_COUNTERFLOW, id_value);
             }

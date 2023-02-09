@@ -725,3 +725,127 @@ class HttpOverTcpTestTlsTwoRouterNginx(RouterTestSslBase):
         digest_of_server_file = get_digest(image_file(image_file(image_file_name[1:])))
         digest_of_response_file = get_digest(self.router_qdra.outdir + image_file_name)
         self.assertEqual(digest_of_server_file, digest_of_response_file)
+
+
+@unittest.skipIf(skip_nginx_test(), "nginx and curl needed to run nginx http2 tests")
+class SNIOverTcpTestTlsTwoRouterNginx(RouterTestSslBase):
+    """
+    In this two router test, the  tcpListener is on Router QDR.A and the tcpConnector is on router
+    QDR.B. Both the tcpListener and the tcpConnector are encrypted. The nginx server that QDR.B connects to
+    is also encrypted.
+    """
+    @classmethod
+    def setUpClass(cls):
+        super(SNIOverTcpTestTlsTwoRouterNginx, cls).setUpClass()
+        if skip_nginx_test():
+            return
+
+        cls.nginx_port = cls.tester.get_port()
+        nginx_config = os.path.join(os.path.dirname(os.path.abspath(__file__)) + '/nginx/nginx-configs/nginx-mydomain1.conf')
+        env = dict()
+        nginx_base_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)) + '/nginx')
+        env['nginx-base-folder'] = nginx_base_folder
+        env['setupclass-folder'] = cls.tester.directory
+        env['nginx-configs-folder'] = os.path.join(nginx_base_folder + '/nginx-configs')
+        env['listening-port'] = str(cls.nginx_port)
+        env['http2'] = ''
+        env['ssl'] = 'ssl'
+        env['tls-enabled'] = '' # Will enable TLS lines
+
+        # TLS stuff
+        env['chained-pem'] = cls.ssl_file('chained-mydomain1.pem')
+        env['server-private-key-no-pass-pem'] = cls.ssl_file('server-private-key-mydomain1-no-pass.pem')
+        env['ssl-verify-client'] = 'off'
+        env['ca-certificate'] = cls.ssl_file('ca-certificate.pem')
+
+        # Start the nginx server with mydomain1.com certificates
+        cls.nginx_server = cls.tester.nginxserver(config_path=nginx_config, env=env)
+
+        inter_router_port = cls.tester.get_port()
+        cls.listener_name = 'listenerToBeDeleted'
+        cls.http_router_listener_port = cls.tester.get_port()
+        cls.http_listener_props = {'port': cls.http_router_listener_port,
+                                   'address': 'examples',
+                                   'host': 'localhost',
+                                   'name': cls.listener_name,
+                                   'authenticatePeer': 'yes',
+                                   'sslProfile': 'http-listener-ssl-profile'}
+        config_qdra = Qdrouterd.Config([
+            ('router', {'mode': 'interior', 'id': 'QDR.A'}),
+            ('listener', {'port': cls.tester.get_port(), 'role': 'normal', 'host': '0.0.0.0'}),
+            # curl will connect to this httpListener and run the tests.
+            ('tcpListener', cls.http_listener_props),
+            ('sslProfile', {'name': 'http-listener-ssl-profile',
+                            'caCertFile': cls.ssl_file('ca-certificate.pem'),
+                            'certFile': cls.ssl_file('server-certificate.pem'),
+                            'privateKeyFile': cls.ssl_file('server-private-key.pem'),
+                            'password': 'server-password'}),
+            ('listener', {'role': 'inter-router', 'port': inter_router_port})
+        ])
+
+        cls.connector_name = 'connectorToBeDeleted'
+        cls.connector_props = {
+            'port': cls.nginx_port,
+            'address': 'examples',
+            'host': 'localhost',
+            'name': cls.connector_name,
+            # Verifies host name. The host name in the certificate sent by the server must match 'localhost'
+            'verifyHostname': 'yes',
+            'sslProfile': 'http-connector-ssl-profile'
+        }
+        config_qdrb = Qdrouterd.Config([
+            ('router', {'mode': 'interior', 'id': 'QDR.B'}),
+            ('listener', {'port': cls.tester.get_port(), 'role': 'normal', 'host': '0.0.0.0'}),
+            ('tcpConnector', cls.connector_props),
+            ('connector', {'name': 'connectorToA', 'role': 'inter-router',
+                           'port': inter_router_port,
+                           'verifyHostname': 'yes'}),
+            ('sslProfile', {'name': 'http-connector-ssl-profile',
+                            'caCertFile': cls.ssl_file('ca-certificate.pem'),
+                            'certFile': cls.ssl_file('client-certificate.pem'),
+                            'privateKeyFile': cls.ssl_file('client-private-key.pem'),
+                            'password': 'client-password'}),
+        ])
+        cls.router_qdra = cls.tester.qdrouterd("tcp-two-router-tls-A", config_qdra, wait=True)
+        cls.router_qdrb = cls.tester.qdrouterd("tcp-two-router-tls-B", config_qdrb)
+        cls.router_qdra.wait_router_connected('QDR.B')
+        cls.router_qdrb.wait_router_connected('QDR.A')
+        wait_tcp_listeners_up(cls.router_qdra.addresses[0])
+
+        # curl will use these additional args to connect to the router.
+        cls.curl_args = ['--cacert', cls.ssl_file('ca-certificate.pem'), '--cert-type', 'PEM',
+                         '--cert', cls.ssl_file('client-certificate.pem') + ":client-password",
+                         '--key', cls.ssl_file('client-private-key.pem')]
+
+    def test_send_mydomain2_request_fail(self):
+        """
+        Sends a curl GET request to mydomain2.com
+        Note that the nginx server is configured to use mydomain1.com's certificates and router QDR.B
+        is set to 'verifyHostname': 'yes'
+        The QDR.B router will be sending 'mydomain2.com' in its SNI to nginx and nginx will send back to the client (QDR.B)
+        its only server cert with CN set to mydomain1.com which QDR.B will reject and close the connection.
+        """
+        index_file_name = '/index.html'
+        resolve_address = "mydomain2.com:" + str(self.http_router_listener_port) + ":127.0.0.1"
+        address = get_address(self.router_qdra) + index_file_name
+        address = address.replace("localhost", "mydomain2.com")
+        out = run_curl(args=['-k', '--resolve', resolve_address, address, '--verbose'] + self.curl_args)
+        self.router_qdrb.wait_log_message("certificate verify failed")
+
+    def test_send_mydomain1_request_pass(self):
+        """
+        Sends a curl GET request to mydomain1.com
+        Note that the nginx server is configured to use mydomain1.com's certificates and router QDR.B
+        is set to 'verifyHostname': 'yes'
+        The QDR.B router will be sending 'mydomain1.com' in its SNI to nginx and nginx will send back to the client (QDR.B)
+        its only server cert with CN set to mydomain1.com which QDR.B will accept and the handshake will be successful.
+        """
+        index_file_name = '/index.html'
+        resolve_address = "mydomain1.com:" + str(self.http_router_listener_port) + ":127.0.0.1"
+        address = get_address(self.router_qdra) + index_file_name
+        address = address.replace("localhost", "mydomain1.com")
+        # Certificate verify in QDR.B must pass since the hostname on QDR.B is mydomain1.com and
+        # the certs in nginx are also mydomain1.com's certs.
+        out = run_curl(args=['-k', '--resolve', resolve_address, address, '--verbose'] + self.curl_args)
+        print(out)
+        self.assertIn("mydomain1", out, f"Expected to find mydomain1 in out but out is {out}")

@@ -1870,7 +1870,7 @@ static void http_connector_establish(qdr_http2_connection_t *conn)
     if (conn->require_tls) {
         // Create the qd_tls_t object
         assert(!conn->tls);
-        conn->tls = qd_tls(conn->connector->tls_domain, conn, conn->conn_id, on_tls_connection_secured);
+        conn->tls = qd_tls(conn->connector->tls_domain, conn, conn->conn_id, 0, on_tls_connection_secured);
         if (conn->tls) {
             // Call pn_raw_connection() only if we were successfully able to configure TLS
             // with the information provided in the sslProfile.
@@ -2830,7 +2830,7 @@ static void handle_raw_connected_event(qdr_http2_connection_t *conn)
         qdr_http_connection_ingress_accept(conn);
         if (conn->require_tls) {
             assert(!conn->tls);
-            conn->tls = qd_tls(conn->listener->tls_domain, conn, conn->conn_id, on_tls_connection_secured);
+            conn->tls = qd_tls(conn->listener->tls_domain, conn, conn->conn_id, 0, on_tls_connection_secured);
             if (conn->tls) {
                 // We were successfully able to gather the details from the associated sslProfile and start
                 // a pn_tls_session. Grant read buffers so that we can now start reading the initial TLS handshake

@@ -75,8 +75,22 @@ void qd_tls_domain_decref(qd_tls_domain_t *tls_domain);
  * @returns a new qd_tls_t instance, or 0 on error.
  */
 typedef void qd_tls_on_secure_cb_t(qd_tls_t *tls, void *context);
-qd_tls_t    *qd_tls(qd_tls_domain_t *tls_domain, void *context, uint64_t conn_id, qd_tls_on_secure_cb_t *on_secure);
 
+/**
+ * Constructor to create a new qd_tls_t instance.
+ *
+ * @param tls_domain - an instance of the qd_tls_domain_t
+ * @param context - a context object
+ * @param conn_id - a pre created connection identifier that will be used in logging
+ * @param sni_hostname - the sni host name
+ * @param on_secure callback - of type qd_tls_on_secure_cb_t which will be called exactly once after handshake is successful.
+ *
+ */
+qd_tls_t *qd_tls(qd_tls_domain_t       *tls_domain,
+                 void                  *context,
+                 uint64_t               conn_id,
+                 const char            *sni_hostname,
+                 qd_tls_on_secure_cb_t *on_secure);
 /**
  * Takes as many read buffers from the raw connection that is allowed by pn_tls_get_decrypt_input_buffer_capacity and
  * decrypts those buffers and sticks the decrypted buffers in the passed in decrypted_buffs list.
@@ -236,5 +250,11 @@ int qd_tls_do_io(qd_tls_t                     *tls,
                  void                         *take_output_context,
                  qd_adaptor_buffer_list_t     *input_data,
                  uint64_t                     *input_data_count);
+
+/**
+ * Returns the sni_hostname field of qd_tls_t.
+ * @param tls - The qd_tls_t object which contains the tls session information
+ */
+char *qd_tls_get_sni_hostname(qd_tls_t *tls);
 
 #endif  // __adaptor_tls_h__

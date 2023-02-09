@@ -49,6 +49,7 @@ struct qd_tls_t {
     void                  *user_context;
     qd_log_source_t       *log_source;
     uint64_t               conn_id;
+    bool                   is_post_processed;
     qd_tls_on_secure_cb_t *on_secure_cb;
     bool                   tls_has_output;
     bool                   tls_error;
@@ -58,6 +59,7 @@ struct qd_tls_t {
 
     uint64_t encrypted_output_bytes;
     uint64_t encrypted_input_bytes;
+    char                  *sni_hostname;
 };
 
 ALLOC_DECLARE(qd_tls_t);
@@ -84,7 +86,11 @@ void qd_tls_get_alpn_protocol(qd_tls_t *tls, char **alpn_protocol)
     }
 }
 
-qd_tls_t *qd_tls(qd_tls_domain_t *tls_domain, void *context, uint64_t conn_id, qd_tls_on_secure_cb_t *on_secure)
+qd_tls_t *qd_tls(qd_tls_domain_t       *tls_domain,
+                 void                  *context,
+                 uint64_t               conn_id,
+                 const char            *sni_hostname,
+                 qd_tls_on_secure_cb_t *on_secure)
 {
     assert(tls_domain);
 
@@ -109,7 +115,25 @@ qd_tls_t *qd_tls(qd_tls_domain_t *tls_domain, void *context, uint64_t conn_id, q
         return 0;
     }
 
-    int ret = pn_tls_set_peer_hostname(tls->tls_session, tls_domain->host);
+    int ret = 0;
+    if (sni_hostname) {
+        qd_log(tls->log_source,
+               QD_LOG_DEBUG,
+               "[C%" PRIu64 "] sslProfile %s with SNI hostname: '%s'",
+               tls->conn_id,
+               tls_domain->ssl_profile_name,
+               sni_hostname);
+        ret = pn_tls_set_peer_hostname(tls->tls_session, sni_hostname);
+    } else {
+        qd_log(tls->log_source,
+                QD_LOG_DEBUG,
+               "[C%" PRIu64 "] sslProfile %s with hostname: '%s'",
+               tls->conn_id,
+               tls_domain->ssl_profile_name,
+               tls_domain->host);
+        ret = pn_tls_set_peer_hostname(tls->tls_session, tls_domain->host);
+    }
+
     if (ret != 0) {
         qd_log(tls->log_source,
                QD_LOG_ERROR,
@@ -391,8 +415,56 @@ void qd_tls_free(qd_tls_t *tls)
             tls->tls_session = 0;
         }
         qd_tls_domain_decref(tls->tls_domain);
+        free(tls->sni_hostname);
         free_qd_tls_t(tls);
     }
+}
+
+/**
+ * This function is called exactly once after a successful handshake
+ * between server and client.
+ */
+static void post_process_tls(qd_tls_t *tls)
+{
+    if (tls->is_post_processed)
+        return;
+
+//    char hostname[256] = {0};
+//    size_t hostname_length;
+//    //
+//    // pn_tls_get_peer_hostname() should only return a hostname
+//    // if the client sent a sni hostname in its initial handshake to the server.
+//    //
+//    if(pn_tls_get_peer_hostname(tls->tls_session, hostname, &hostname_length)) {
+//        if (hostname_length) {
+//            tls->sni_hostname = qd_calloc(hostname_length + 1, sizeof(char));
+//            //
+//            // This sni_hostname will be sent in the AMQP message as a message property.
+//            //
+//            snprintf(tls->sni_hostname, hostname_length, "%s", hostname);
+//            printf ("post_process_tls tls->sni_hostname=%s\n", tls->sni_hostname);
+//            qd_log(tls->log_source,
+//                   QD_LOG_DEBUG,
+//                   "[C%" PRIu64 "] SNI hostname=%s",
+//                   tls->conn_id,
+//                   tls->sni_hostname);
+//        }
+//    }
+
+    //
+    // Set a test sni hostname as if we obtained it from proton.
+    //
+    char *test_host_name = "mydomain2.com";
+    int hostname_length = strlen(test_host_name);
+    tls->sni_hostname = qd_calloc(hostname_length + 1, sizeof(char));
+    strcpy(tls->sni_hostname, test_host_name);
+
+    if (tls->on_secure_cb) {
+        tls->on_secure_cb(tls, tls->user_context);
+        tls->on_secure_cb = 0;  // one shot
+    }
+
+    tls->is_post_processed = true;
 }
 
 /**
@@ -402,8 +474,6 @@ void qd_tls_free(qd_tls_t *tls)
  */
 static bool process_tls(qd_tls_t *tls)
 {
-    const bool check_if_secure = tls->on_secure_cb && !pn_tls_is_secure(tls->tls_session);
-
     int err = pn_tls_process(tls->tls_session);
     if (err && !tls->tls_error) {
         tls->tls_error = true;
@@ -421,9 +491,8 @@ static bool process_tls(qd_tls_t *tls)
         return false;
     }
 
-    if (check_if_secure && pn_tls_is_secure(tls->tls_session)) {
-        tls->on_secure_cb(tls, tls->user_context);
-        tls->on_secure_cb = 0;  // one shot
+    if (pn_tls_is_secure(tls->tls_session) && !tls->is_post_processed) {
+        post_process_tls(tls);
     }
     return true;
 }
@@ -1022,4 +1091,9 @@ int qd_tls_do_io(qd_tls_t                     *tls,
     }
 
     return 0;
+}
+
+char *qd_tls_get_sni_hostname(qd_tls_t *tls)
+{
+    return tls->sni_hostname;
 }
