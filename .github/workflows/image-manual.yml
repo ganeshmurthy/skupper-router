@@ -59,6 +59,11 @@ jobs:
           export PROJECT_TAG="${DOCKER_TAG}"
           # Use {GITHUB_SHA::8} for shorter SHA
           export VERSION="${GITHUB_SHA}"
+
+          export TEST_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
+          echo 'TEST_PUSH_LATEST=$TEST_PUSH_LATEST'
+          echo 'CAN_PUSH_LATEST=$CAN_PUSH_LATEST'
+
           if [ "$CAN_PUSH_LATEST" == "true" ]; then
             echo 'image-manual.yml setting PUSH_LATEST=true, will push :latest tag'
             export PUSH_LATEST=true
