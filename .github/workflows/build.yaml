@@ -73,6 +73,7 @@ jobs:
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         -DCMAKE_C_FLAGS=-DQD_MEMORY_DEBUG
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
         -DUSE_BWRAP=ON
         -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
         -DSANITIZE_PYTHON=OFF
@@ -388,6 +389,7 @@ jobs:
         -DBUILD_TLS=ON
       RouterCMakeExtraArgs: >
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         -DPython_EXECUTABLE=/usr/bin/python3
         -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
