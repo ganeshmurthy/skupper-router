@@ -1191,7 +1191,7 @@ static int on_frame_recv_callback(nghttp2_session *session,
                        conn->conn_id, stream_id);
 
                 // Free the stream data object since it is no longer needed.
-                free_http2_stream_data(stream_data, false);
+                //free_http2_stream_data(stream_data, false);
         }
     } break;
     case NGHTTP2_PING: {
