@@ -344,10 +344,14 @@ static int handle_incoming_raw_read(qdr_tcp_connection_t *conn, qd_buffer_list_t
                conn->conn_id, encrypted_bytes_in);
 
         if (encrypted_bytes_in == QD_TLS_ERROR) {
+            qd_log(tcp_adaptor->log_source, QD_LOG_DEBUG, "[C%" PRIu64 "] QD_TLS_ERROR encountered, closing raw connection, returning 0", conn->conn_id);
             pn_raw_connection_close(conn->pn_raw_conn);
             return 0;
         } else if (DEQ_SIZE(decrypted_buffs) > 0 && buffers && qd_tls_is_secure(conn->tls)) {
             result += copy_decrypted_adaptor_buffs_to_qd_buffs(conn, &decrypted_buffs, buffers);
+        }
+        else {
+            qd_log(tcp_adaptor->log_source, QD_LOG_DEBUG, "[C%" PRIu64 "] encrypted_bytes_in=%i, qd_tls_is_secure(conn->tls)=%i, DEQ_SIZE(decrypted_buffs)=%zu", conn->conn_id, encrypted_bytes_in, qd_tls_is_secure(conn->tls), DEQ_SIZE(decrypted_buffs));
         }
         conn->encrypted_bytes_in += encrypted_bytes_in;
     } else {
