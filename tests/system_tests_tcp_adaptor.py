@@ -1333,18 +1333,20 @@ class CommonTcpTests:
         retry_assertion(check_connections_opened_listener, delay=1)
 
         def check_connections_opened_connector():
+            print("Executing check_connections_opened_connector")
             # Verify connector stats
             query_command = 'QUERY --type=tcpConnector'
             outputs = json.loads(self.run_skmanage(query_command))
             for output in outputs:
+                print("output=", output)
                 self.assertTrue(output['address'].startswith("ES"))
                 self.assertIn("connectionsOpened", output)
                 self.assertGreater(output["connectionsOpened"], 0)
                 # egress_dispatcher connection opens and should never close
                 self.assertEqual(output["connectionsOpened"], output["connectionsClosed"]+1)
                 self.assertEqual(output["bytesIn"], output["bytesOut"])
-            self.logger.log(tname + " SUCCESS")
         retry_assertion(check_connections_opened_connector, delay=1)
+        self.logger.log(tname + " SUCCESS")
 
     # connection balancing
     def test_90_balancing(self):
