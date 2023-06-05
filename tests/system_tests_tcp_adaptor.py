@@ -1308,40 +1308,43 @@ class CommonTcpTests:
         self.logger.log(tname + " START")
         # Verify listener stats
 
-        query_command = 'QUERY --type=tcpListener'
-        outputs = json.loads(self.run_skmanage(query_command))
-        es_inta_connections_opened = 0
-        for output in outputs:
-            if output['address'].startswith("ES"):
-                if output['address'] == 'ES_INTA':
-                    es_inta_connections_opened += output["connectionsOpened"]
-                # Check only echo server listeners
-                assert "connectionsOpened" in output
-                # There is a listener with authenticatePeer:yes and we have not run any tests on it yet, so
-                # it is allowed to have zero connectionsOpened
-                if output['address'] != 'ES_INTA' and output['address'] != 'ES_BAD_CONNECTOR_CERT_INTA' \
-                        and output['address'] != 'ES_GOOD_CONNECTOR_CERT_INTA' \
-                        and output['address'] != 'ES_ALL':
-                    assert output["connectionsOpened"] > 0
-                assert output["bytesIn"] == output["bytesOut"]
+        def check_connections_opened_listener():
+            query_command = 'QUERY --type=tcpListener'
+            outputs = json.loads(self.run_skmanage(query_command))
+            es_inta_connections_opened = 0
+            for output in outputs:
+                if output['address'].startswith("ES"):
+                    if output['address'] == 'ES_INTA':
+                        es_inta_connections_opened += output["connectionsOpened"]
+                    # Check only echo server listeners
+                    self.assertIn("connectionsOpened", output)
+                    # There is a listener with authenticatePeer:yes and we have not run any tests on it yet, so
+                    # it is allowed to have zero connectionsOpened
+                    if output['address'] != 'ES_INTA' and output['address'] != 'ES_BAD_CONNECTOR_CERT_INTA' \
+                            and output['address'] != 'ES_GOOD_CONNECTOR_CERT_INTA' \
+                            and output['address'] != 'ES_ALL':
+                        self.assertGreater(output["connectionsOpened"], 0)
+                    self.assertEqual(output["bytesIn"],output["bytesOut"])
+            # The connections opened count is 7 only if the ncat tests were run.
+            # The ncat tests will only be run if ncat_available() is True.
+            # https://github.com/skupperproject/skupper-router/issues/1019
+            if ncat_available():
+                self.assertEqual(es_inta_connections_opened, 7)
+        retry_assertion(check_connections_opened_listener, delay=1)
 
-        # The connections opened count is 7 only if the ncat tests were run.
-        # The ncat tests will only be run if ncat_available() is True.
-        # https://github.com/skupperproject/skupper-router/issues/1019
-        if ncat_available():
-            self.assertEqual(es_inta_connections_opened, 7)
-
-        # Verify connector stats
-        query_command = 'QUERY --type=tcpConnector'
-        outputs = json.loads(self.run_skmanage(query_command))
-        for output in outputs:
-            assert output['address'].startswith("ES")
-            assert "connectionsOpened" in output
-            assert output["connectionsOpened"] > 0
-            # egress_dispatcher connection opens and should never close
-            assert output["connectionsOpened"] == output["connectionsClosed"] + 1
-            assert output["bytesIn"] == output["bytesOut"]
-        self.logger.log(tname + " SUCCESS")
+        def check_connections_opened_connector():
+            # Verify connector stats
+            query_command = 'QUERY --type=tcpConnector'
+            outputs = json.loads(self.run_skmanage(query_command))
+            for output in outputs:
+                self.assertTrue(output['address'].startswith("ES"))
+                self.assertIn("connectionsOpened", output)
+                self.assertGreater(output["connectionsOpened"], 0)
+                # egress_dispatcher connection opens and should never close
+                self.assertEqual(output["connectionsOpened"], output["connectionsClosed"]+1)
+                self.assertEqual(output["bytesIn"], output["bytesOut"])
+            self.logger.log(tname + " SUCCESS")
+        retry_assertion(check_connections_opened_connector, delay=1)
 
     # connection balancing
     def test_90_balancing(self):
