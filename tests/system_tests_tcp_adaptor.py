@@ -1075,6 +1075,12 @@ class CommonTcpTests:
                 assert result is None, "TCP_TEST test_01_tcp_basic_connectivity Stop %s FAIL: %s" % (name, result)
                 self.logger.log("TCP_TEST test_01_tcp_basic_connectivity Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_01_tcp_basic_connectivity output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_01_tcp_basic_connectivity output[connectionsClosed]=", output["connectionsClosed"])
+
     # larger messages
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_10_tcp_INTA_INTA_100(self):
