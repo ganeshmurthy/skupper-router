@@ -1343,7 +1343,8 @@ class CommonTcpTests:
                 self.assertIn("connectionsOpened", output)
                 self.assertGreater(output["connectionsOpened"], 0)
                 # egress_dispatcher connection opens and should never close
-                self.assertEqual(output["connectionsOpened"], output["connectionsClosed"]+1)
+                if ncat_available():
+                    self.assertEqual(output["connectionsOpened"], output["connectionsClosed"]+1)
                 self.assertEqual(output["bytesIn"], output["bytesOut"])
         retry_assertion(check_connections_opened_connector, delay=1)
         self.logger.log(tname + " SUCCESS")
