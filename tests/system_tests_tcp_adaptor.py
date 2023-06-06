@@ -1087,6 +1087,12 @@ class CommonTcpTests:
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_10_tcp_INTA_INTA_100 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_10_tcp_INTA_INTA_100 output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_11_tcp_INTA_INTA_1000(self):
         name = "test_11_tcp_INTA_INTA_1000"
@@ -1097,6 +1103,12 @@ class CommonTcpTests:
             print(result)
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_11_tcp_INTA_INTA_1000 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_11_tcp_INTA_INTA_1000 output[connectionsClosed]=", output["connectionsClosed"])
 
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_12_tcp_INTA_INTA_500000(self):
@@ -1109,6 +1121,12 @@ class CommonTcpTests:
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_12_tcp_INTA_INTA_500000 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_12_tcp_INTA_INTA_500000 output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_13_tcp_EA1_EC2_500000(self):
         name = "test_13_tcp_EA1_EC2_500000"
@@ -1118,6 +1136,12 @@ class CommonTcpTests:
         if result is not None:
             print(result)
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
+
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_13_tcp_EA1_EC2_500000 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_13_tcp_EA1_EC2_500000 output[connectionsClosed]=", output["connectionsClosed"])
 
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     # This test sends and receives 2 million bytes from edge router to edge router
@@ -1131,6 +1155,12 @@ class CommonTcpTests:
             print(result)
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_14_tcp_EA2_EC1_2000000 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_14_tcp_EA2_EC1_2000000 output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_20_tcp_connect_disconnect(self):
         name = "test_20_tcp_connect_disconnect"
@@ -1142,6 +1172,12 @@ class CommonTcpTests:
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         # TODO: This test passes but in passing router INTA crashes undetected.
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_20_tcp_connect_disconnect output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_20_tcp_connect_disconnect output[connectionsClosed]=", output["connectionsClosed"])
 
     # concurrent messages
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
@@ -1156,6 +1192,12 @@ class CommonTcpTests:
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_50_concurrent_interior output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_50_concurrent_interior output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
     def test_50_concurrent_edges(self):
         name = "test_50_concurrent_edges"
@@ -1167,6 +1209,12 @@ class CommonTcpTests:
             print(result)
         assert result is None, "TCP_TEST Stop %s FAIL: %s" % (name, result)
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_50_concurrent_edges output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_50_concurrent_edges output[connectionsClosed]=", output["connectionsClosed"])
 
     # Q2 holdoff
     @unittest.skipIf(DISABLE_SELECTOR_TESTS, DISABLE_SELECTOR_REASON)
@@ -1284,6 +1332,12 @@ class CommonTcpTests:
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_75_half_closed_EA1_EC2 output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_75_half_closed_EA1_EC2 output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(not ncat_available() or DISABLE_SELECTOR_TESTS, "Ncat utility is not available or selector tests disabled")
     def test_76_half_closed_EA1_EC2_large_message(self):
         name = "test_76_half_closed_EA1_EC2_large_message"
@@ -1293,6 +1347,12 @@ class CommonTcpTests:
         self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
 
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_76_half_closed_EA1_EC2_large_message output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_76_half_closed_EA1_EC2_large_message output[connectionsClosed]=", output["connectionsClosed"])
+
     @unittest.skipIf(not ncat_available() or DISABLE_SELECTOR_TESTS, "Ncat utility is not available or selector tests disabled")
     def test_77_half_closed_INTA_INTC_large_message(self):
         name = "test_77_half_closed_INTA_INTC_large_message"
@@ -1301,6 +1361,12 @@ class CommonTcpTests:
         out, _ = self._ncat_runner(name, "INTA", "INTC", large_msg)
         self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
+
+        query_command = 'QUERY --type=tcpConnector'
+        outputs = json.loads(self.run_skmanage(query_command))
+        for output in outputs:
+            print("test_77_half_closed_INTA_INTC_large_message output[connectionsOpened]=", output["connectionsOpened"])
+            print("test_77_half_closed_INTA_INTC_large_message output[connectionsClosed]=", output["connectionsClosed"])
 
     # connector/listener stats
     def test_80_stats(self):
