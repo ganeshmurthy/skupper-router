@@ -2173,6 +2173,7 @@ void qd_link_q2_restart_receive(qd_alloc_safe_ptr_t context)
     qd_connection_t *in_conn = qd_link_connection(in_link);
     if (in_conn) {
         qd_link_t_sp *safe_ptr = NEW(qd_alloc_safe_ptr_t);
+        qd_log(LOG_MESSAGE, QD_LOG_TRACE, "q2 unblocked restart receive");
         *safe_ptr = context;  // use original to keep old sequence counter
         qd_connection_invoke_deferred(in_conn, deferred_AMQP_rx_handler, safe_ptr);
     }

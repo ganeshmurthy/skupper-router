@@ -1529,6 +1529,7 @@ qd_message_t *qd_message_receive(pn_delivery_t *delivery)
     if (!qd_link_is_q2_limit_unbounded(qdl) && !msg->content->disable_q2_holdoff) {
         if (msg->content->q2_input_holdoff) {
             UNLOCK(&msg->content->lock);
+            qd_log(LOG_MESSAGE, QD_LOG_TRACE, "q2 blocked stopped receiving");
             return (qd_message_t*)msg;
         }
     }
