@@ -1746,7 +1746,8 @@ class QdManager:
         results = self.query(CONNECTION_TYPE)
         num_adaptor_connections = 0
         for result in results:
-            if result['protocol'] != 'amqp' and result['host'] != 'egress-dispatch':
+            if result['protocol'] != 'amqp' and result['host'] != 'egress-dispatch' \
+                    and result['protocol'] != 'tcp_lite':
                 num_adaptor_connections += 1
         assert num_adaptor_connections == 0
 
