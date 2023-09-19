@@ -998,7 +998,7 @@ class CommonTcpTests:
                                           None,
                                           3,
                                           1,
-                                          False,
+                                          print_client_logs=True,
                                           timeout=TIMEOUT * 2,
                                           port_override=listener_port,
                                           test_ssl=test_ssl,
