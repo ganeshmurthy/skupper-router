@@ -996,7 +996,7 @@ class CommonTcpTests:
                                           self.logger,
                                           None,
                                           None,
-                                          1,
+                                          3,
                                           1,
                                           False,
                                           timeout=TIMEOUT * 2,
