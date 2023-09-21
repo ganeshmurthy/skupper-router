@@ -1474,7 +1474,9 @@ static void CORE_flow(void *context, qdr_link_t *link, int credit)
         }
     } else if (common->context_type == TL_CONNECTION) {
         tcplite_connection_t *conn = (tcplite_connection_t*) common;
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_flow credit=%i", conn->common.conn_id, credit);
         if (qdr_link_direction(link) == QD_INCOMING && credit > 0) {
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_flow qdr_link_direction(link) == QD_INCOMING", conn->common.conn_id);
             conn->inbound_credit = true;
             connection_run_XSIDE_IO(conn);
         }
