@@ -728,7 +728,9 @@ static void link_setup_LSIDE_IO(tcplite_connection_t *conn)
 
     conn->inbound_link = qdr_link_first_attach(conn->common.core_conn, QD_INCOMING, qdr_terminus(0), target, "tcp.lside.in", 0, false, 0, &conn->inbound_link_id);
     qdr_link_set_context(conn->inbound_link, conn);
+    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] link_setup_LSIDE_IO QD_INCOMING", conn->common.conn_id, conn->inbound_link->identity);
     conn->outbound_link = qdr_link_first_attach(conn->common.core_conn, QD_OUTGOING, source, qdr_terminus(0), "tcp.lside.out", 0, false, 0, &conn->outbound_link_id);
+    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] link_setup_LSIDE_IO QD_OUTGOING", conn->common.conn_id, conn->inbound_link->identity);
     qdr_link_set_context(conn->outbound_link, conn);
     qdr_link_set_user_streaming(conn->outbound_link);
     qdr_link_flow(tcplite_context->core, conn->outbound_link, 1, false);
@@ -1447,16 +1449,16 @@ static void CORE_second_attach(void           *context,
     if (common->context_type == TL_CONNECTION) {
         tcplite_connection_t *conn = (tcplite_connection_t*) common;
         if (qdr_link_direction(link) == QD_OUTGOING) {
-            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach QD_OUTGOING", common->conn_id);
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%" PRIu64 "] CORE_second_attach QD_OUTGOING", common->conn_id, link->identity);
             conn->reply_to = (char*) qd_iterator_copy(qdr_terminus_get_address(source));
             connection_run_XSIDE_IO(conn);
         }
         else {
-            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach QD_INCOMING", common->conn_id);
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%" PRIu64 "] CORE_second_attach QD_INCOMING", common->conn_id, link->identity);
         }
     }
     else {
-        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach NOT TL_CONNECTION", common->conn_id);
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%" PRIu64 "] CORE_second_attach NOT TL_CONNECTION", common->conn_id, link->identity);
     }
 }
 
@@ -1485,9 +1487,9 @@ static void CORE_flow(void *context, qdr_link_t *link, int credit)
         }
     } else if (common->context_type == TL_CONNECTION) {
         tcplite_connection_t *conn = (tcplite_connection_t*) common;
-        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_flow credit=%i", conn->common.conn_id, credit);
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%" PRIu64 "] CORE_flow credit=%i", conn->common.conn_id, link->identity, credit);
         if (qdr_link_direction(link) == QD_INCOMING && credit > 0) {
-            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_flow qdr_link_direction(link) == QD_INCOMING", conn->common.conn_id);
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%" PRIu64 "] CORE_flow qdr_link_direction(link) == QD_INCOMING", conn->common.conn_id, link->identity);
             conn->inbound_credit = true;
             connection_run_XSIDE_IO(conn);
         }
@@ -1785,7 +1787,9 @@ static void ADAPTOR_init(qdr_core_t *core, void **adaptor_context)
     tcplite_context->core   = core;
     tcplite_context->qd     = qdr_core_dispatch(core);
     tcplite_context->server = tcplite_context->qd->server;
-    tcplite_context->pa     = qdr_protocol_adaptor(core, "tcp_lite", (void*) tcplite_context,
+    tcplite_context->pa     = qdr_protocol_adaptor(core,
+                                                   "tcp_lite",
+                                                   (void*) tcplite_context,
                                                    CORE_activate,
                                                    CORE_first_attach,
                                                    CORE_second_attach,

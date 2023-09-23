@@ -2076,8 +2076,10 @@ static void qdr_link_inbound_first_attach_CT(qdr_core_t *core, qdr_action_t *act
                 //
                 // This link has a target address
                 //
-                if (core->addr_lookup_handler)
+                if (core->addr_lookup_handler) {
+                    qd_log(LOG_ROUTER_CORE, QD_LOG_INFO, "[C%" PRIu64 "]C%" PRIu64 "] qdr_link_inbound_first_attach_CT calling core->addr_lookup_handler", conn->identity, link->identity);
                     core->addr_lookup_handler(core->addr_lookup_context, conn, link, dir, source, target);
+                }
                 else {
                     qdr_link_outbound_detach_CT(core, link, 0, QDR_CONDITION_NO_ROUTE_TO_DESTINATION, true);
                     qdr_terminus_free(source);
