@@ -1428,7 +1428,11 @@ static void CORE_first_attach(void               *context,
     qdr_link_second_attach(link, local_source, local_target);
 
     if (qdr_link_direction(link) == QD_OUTGOING) {
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_first_attach QD_OUTGOING credit=1", common->conn_id);
         qdr_link_flow(tcplite_context->core, link, 1, false);
+    }
+    else {
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_first_attach QD_INCOMING", common->conn_id);
     }
 }
 
@@ -1443,9 +1447,16 @@ static void CORE_second_attach(void           *context,
     if (common->context_type == TL_CONNECTION) {
         tcplite_connection_t *conn = (tcplite_connection_t*) common;
         if (qdr_link_direction(link) == QD_OUTGOING) {
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach QD_OUTGOING", common->conn_id);
             conn->reply_to = (char*) qd_iterator_copy(qdr_terminus_get_address(source));
             connection_run_XSIDE_IO(conn);
         }
+        else {
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach QD_INCOMING", common->conn_id);
+        }
+    }
+    else {
+        qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_second_attach NOT TL_CONNECTION", common->conn_id);
     }
 }
 
