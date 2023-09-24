@@ -218,6 +218,7 @@ static void qdr_link_react_to_first_attach_CT(qdr_core_t       *core,
                                               bool              unavailable,
                                               bool              core_endpoint)
 {
+    qd_log(LOG_ROUTER_CORE, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] qdr_link_react_to_first_attach_CT", conn->identity, link->identity);
     if (core_endpoint) {
         qdrc_endpoint_do_bound_attach_CT(core, addr, link, source, target);
         source = target = 0;  // ownership passed to qdrc_endpoint_do_bound_attach_CT
@@ -229,6 +230,7 @@ static void qdr_link_react_to_first_attach_CT(qdr_core_t       *core,
         //
         // No route to this destination, reject the link
         //
+        qd_log(LOG_ROUTER_CORE, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] qdr_link_react_to_first_attach_CT QDR_CONDITION_NO_ROUTE_TO_DESTINATION", conn->identity, link->identity);
         qdr_link_outbound_detach_CT(core, link, 0, QDR_CONDITION_NO_ROUTE_TO_DESTINATION, true);
     } else {
         //

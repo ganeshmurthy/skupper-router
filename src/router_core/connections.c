@@ -1312,7 +1312,7 @@ void qdr_link_outbound_second_attach_CT(qdr_core_t *core, qdr_link_t *link, qdr_
     work->target    = target;
 
     link->oper_status = QDR_LINK_OPER_UP;
-
+    qd_log(LOG_ROUTER_CORE, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] qdr_link_outbound_second_attach_CT QDR_CONNECTION_WORK_SECOND_ATTACH", link->conn->identity, link->identity);
     qdr_connection_enqueue_work_CT(core, link->conn, work);
 }
 
