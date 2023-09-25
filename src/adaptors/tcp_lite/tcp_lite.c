@@ -728,9 +728,9 @@ static void link_setup_LSIDE_IO(tcplite_connection_t *conn)
 
     conn->inbound_link = qdr_link_first_attach(conn->common.core_conn, QD_INCOMING, qdr_terminus(0), target, "tcp.lside.in", 0, false, 0, &conn->inbound_link_id);
     qdr_link_set_context(conn->inbound_link, conn);
-    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] link_setup_LSIDE_IO QD_INCOMING", conn->common.conn_id, conn->inbound_link->identity);
+    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%"PRIu64"] link_setup_LSIDE_IO QD_INCOMING", conn->common.conn_id, conn->inbound_link->identity);
     conn->outbound_link = qdr_link_first_attach(conn->common.core_conn, QD_OUTGOING, source, qdr_terminus(0), "tcp.lside.out", 0, false, 0, &conn->outbound_link_id);
-    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][C%"PRIu64"] link_setup_LSIDE_IO QD_OUTGOING", conn->common.conn_id, conn->inbound_link->identity);
+    qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"][L%"PRIu64"] link_setup_LSIDE_IO QD_OUTGOING", conn->common.conn_id, conn->inbound_link->identity);
     qdr_link_set_context(conn->outbound_link, conn);
     qdr_link_set_user_streaming(conn->outbound_link);
     qdr_link_flow(tcplite_context->core, conn->outbound_link, 1, false);
