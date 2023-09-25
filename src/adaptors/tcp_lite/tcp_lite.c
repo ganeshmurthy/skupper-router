@@ -1406,6 +1406,7 @@ static void CORE_activate(void *context, qdr_connection_t *core_conn)
         if (IS_ATOMIC_FLAG_SET(&conn->raw_opened)) {
             SET_ATOMIC_FLAG(&conn->core_activation);
             pn_raw_connection_wake(conn->raw_conn);
+            qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%"PRIu64"] CORE_activate pn_raw_connection_wake called", common->conn_id);
         }
         break;
     }
