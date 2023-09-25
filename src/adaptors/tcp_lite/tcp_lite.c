@@ -995,8 +995,8 @@ static void handle_first_outbound_delivery_CSIDE(tcplite_connector_t *cr, qdr_li
     // After this call, a separate IO thread may immediately be invoked in the context
     // of the new connection to handle raw connection events.
     //
-    pn_proactor_raw_connect(tcplite_context->proactor, conn->raw_conn, cr->adaptor_config->host_port);
     SET_ATOMIC_FLAG(&conn->raw_opened);
+    pn_proactor_raw_connect(tcplite_context->proactor, conn->raw_conn, cr->adaptor_config->host_port);
 }
 
 
