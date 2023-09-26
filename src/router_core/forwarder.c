@@ -25,7 +25,7 @@
 #include <inttypes.h>
 #include <strings.h>
 
-// #define LOG_FORWARD_BALANCED 1
+#define LOG_FORWARD_BALANCED 1
 
 typedef struct qdr_forward_deliver_info_t {
     DEQ_LINKS(struct qdr_forward_deliver_info_t);
@@ -907,7 +907,7 @@ int qdr_forward_balanced_CT(qdr_core_t      *core,
     //
     assert(!control);
 #ifdef LOG_FORWARD_BALANCED
-    qd_log(LOG_ROUTER_CORE, QD_LOG_DEBUG, "ForwardBalanced: %s locals=%d remotes=%d",
+    qd_log(LOG_ROUTER_CORE, QD_LOG_DEBUG, "ForwardBalanced: %s locals=%ld remotes=%d",
            qd_hash_key_by_handle(addr->hash_handle), DEQ_SIZE(addr->rlinks), qd_bitmask_cardinality(addr->rnodes));
 #endif
 
