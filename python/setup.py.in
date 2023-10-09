@@ -20,6 +20,7 @@
 
 from setuptools import setup
 from setuptools.command.build_py import build_py
+from setuptools.extern.packaging.version import InvalidVersion
 from os.path import join
 from os import environ
 
@@ -45,21 +46,41 @@ destdir = environ.get("DESTDIR")
 if destdir:
     options["install"] = {"root": destdir}
 
-setup(
-    options=options,
+try:
+    setup(
+        options=options,
+        name='skupper_router',
+        description='Skupper Router tools and libraries.',
+        package_dir={'' : '${CMAKE_SOURCE_DIR}/python'},
+        packages=['skupper_router', 'skupper_router.management'],
+        package_data={'skupper_router.management': ['*.json']},
+        cmdclass={'build_py': BuildPy},
+        version='${QPID_DISPATCH_VERSION}',
+        author='Skupper Project',
+        author_email='skupper@googlegroups.com',
+        url='https://skupper.io/',
+        license='Apache Software License',
+        zip_safe=False,
+    )
+except InvalidVersion:
+    # When on a branch, and no version is provided via the -DVERSION, the router's version is set to
+    # commit-sha(<branch-name>), e.g. 2gf3445634mndfkgfh(main)
+    # That version is no PEP-440 compatible and so setuptools fails the build.
+    # We are catching the InvalidVersion error and not passing in a version
+    # The router's version can be obtained via skrouterd --version
+    # What is the reason to provide version here ?
+    setup(
+        options=options,
+        name='skupper_router',
+        description='Skupper Router tools and libraries.',
+        package_dir={'': '${CMAKE_SOURCE_DIR}/python'},
+        packages=['skupper_router', 'skupper_router.management'],
+        package_data={'skupper_router.management': ['*.json']},
+        cmdclass={'build_py': BuildPy},
+        author='Skupper Project',
+        author_email='skupper@googlegroups.com',
+        url='https://skupper.io/',
+        license='Apache Software License',
+        zip_safe=False,
+    )
 
-    name='skupper_router',
-    description='Skupper Router tools and libraries.',
-    package_dir={'' : '${CMAKE_SOURCE_DIR}/python'},
-    packages=['skupper_router', 'skupper_router.management'],
-    package_data={'skupper_router.management': ['*.json']},
-    cmdclass={'build_py': BuildPy},
-
-    version='${QPID_DISPATCH_VERSION}',
-    author='Skupper Project',
-    author_email='skupper@googlegroups.com',
-    url='https://skupper.io/',
-    license='Apache Software License',
-
-    zip_safe=False,
-)
