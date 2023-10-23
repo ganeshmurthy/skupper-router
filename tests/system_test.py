@@ -1032,8 +1032,9 @@ class Qdrouterd(Process):
     def is_router_connected(self, router_id, **retry_kwargs):
         try:
             self.management.read(identity="router.node/%s" % router_id)
-        except Exception:
+        except Exception as e:
             # router_id is not yet seen
+            print("self.management.read in is_router_connected returning False, e=", e)
             return False
 
         # TODO aconway 2015-01-29: The above check should be enough, we
@@ -1043,11 +1044,14 @@ class Qdrouterd(Process):
         # Meantime the following actually tests send-thru to the router.
         try:
             with Node.connect(self.addresses[0], router_id) as node:
-                return node.query(ROUTER_TYPE)
+                router_type = node.query(ROUTER_TYPE)
+                print("is_router_connected router_type=", router_type)
+                return router_type
         except (proton.ConnectionException, proton.Timeout,
                 NotFoundStatus, proton.utils.LinkDetached,
                 proton.utils.SendException) as exc:
             # router_id not completely done initializing
+            print("Node.connect() in is_router_connected returning False, exc=", exc)
             return False
 
     def wait_router_connected(self, router_id, **retry_kwargs):
