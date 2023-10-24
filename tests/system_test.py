@@ -45,6 +45,7 @@ import socket
 import subprocess
 import sys
 import time
+import traceback
 import unittest
 import uuid
 from copy import copy
@@ -1032,9 +1033,11 @@ class Qdrouterd(Process):
     def is_router_connected(self, router_id, **retry_kwargs):
         try:
             self.management.read(identity="router.node/%s" % router_id)
+            print("self.management.read succeeded", flush=True)
         except Exception as e:
             # router_id is not yet seen
-            print("self.management.read in is_router_connected returning False, e=", e)
+            traceback.print_exception(e)
+            print("self.management.read in is_router_connected returning False", flush=True)
             return False
 
         # TODO aconway 2015-01-29: The above check should be enough, we

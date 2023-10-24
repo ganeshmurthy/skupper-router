@@ -672,7 +672,7 @@ class TcpAdaptorBase(TestCase):
         cls.logger.log("TCP_TEST INTA waiting for connection to INTB")
         cls.INTA.wait_router_connected('INTB')
         cls.logger.log("TCP_TEST INTB waiting for connection to INTA")
-        cls.INTB.wait_router_connected('INTA')
+        cls.INTB.wait_router_connected('INTA', delay=0.5)
         cls.logger.log("TCP_TEST INTB waiting for connection to INTC")
         cls.INTB.wait_router_connected('INTC')
         cls.logger.log("TCP_TEST INTC waiting for connection to INTB")
