@@ -45,7 +45,6 @@ import socket
 import subprocess
 import sys
 import time
-import traceback
 import unittest
 import uuid
 from copy import copy
