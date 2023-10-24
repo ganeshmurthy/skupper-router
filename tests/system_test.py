@@ -169,11 +169,14 @@ def retry(function: Callable[[], bool], timeout: float = TIMEOUT, delay: float =
     Returns what function returns or None if timeout expires.
     """
     deadline = time.time() + timeout
+    print(f"In retry, delay={delay}")
     while True:
         ret = function()
         if ret:
+            print(f"In retry() function={ret}")
             return ret
         else:
+            print(f"In retry() delay={delay}")
             delay = retry_delay(deadline, delay, max_delay)
             if delay is None:
                 return None
@@ -1036,7 +1039,6 @@ class Qdrouterd(Process):
             print("self.management.read succeeded", flush=True)
         except Exception as e:
             # router_id is not yet seen
-            traceback.print_exception(e)
             print("self.management.read in is_router_connected returning False", flush=True)
             return False
 
@@ -1058,6 +1060,7 @@ class Qdrouterd(Process):
             return False
 
     def wait_router_connected(self, router_id, **retry_kwargs):
+        print(f"In wait_router_connected, router_id={router_id}", flush=True)
         retry(lambda: self.is_router_connected(router_id), **retry_kwargs)
 
     def is_edge_routers_connected(self, num_edges=1, role='edge', num_meshes=None, **retry_kwargs):

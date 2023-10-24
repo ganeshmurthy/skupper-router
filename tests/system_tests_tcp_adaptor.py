@@ -670,7 +670,7 @@ class TcpAdaptorBase(TestCase):
         cls.router_dict['EC2'] = cls.EC2
 
         cls.logger.log("TCP_TEST INTA waiting for connection to INTB")
-        cls.INTA.wait_router_connected('INTB')
+        cls.INTA.wait_router_connected('INTB', delay=0.5)
         cls.logger.log("TCP_TEST INTB waiting for connection to INTA")
         cls.INTB.wait_router_connected('INTA', delay=0.5)
         cls.logger.log("TCP_TEST INTB waiting for connection to INTC")
