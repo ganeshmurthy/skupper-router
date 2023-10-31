@@ -162,6 +162,19 @@ def retry_delay(deadline, delay, max_delay):
 TIMEOUT = float(os.environ.get("QPID_SYSTEM_TEST_TIMEOUT", 60))
 
 
+def tail_file(fname, line_count=50):
+    """Tail a file to a list"""
+    out = []
+    with open(fname) as f:
+        line = f.readline()
+        while line:
+            out.append(line)
+            if line_count is not None and len(out) > line_count:
+                out.pop(0)
+            line = f.readline()
+    return out
+
+
 def retry(function: Callable[[], bool], timeout: float = TIMEOUT, delay: float = .001, max_delay: float = 1):
     """Call function until it returns a true value or timeout expires.
     Double the delay for each retry up to max_delay.
@@ -747,6 +760,15 @@ class Qdrouterd(Process):
             self._management = Node.connect(self.addresses[0], timeout=TIMEOUT)
         return self._management
 
+    def print_log_lines(self, line_count=50):
+        if self.logfile:
+            sys.stderr.write("\nRouter %s log file tail:\n>>>>\n" %
+                             self.config.router_id)
+            tail = tail_file(self.logfile_path, line_count=line_count)
+            for ln in tail:
+                sys.stderr.write("%s" % ln)
+            sys.stderr.write("\n<<<<\n")
+
     def teardown(self):
         if self._management:
             try:
@@ -811,18 +833,6 @@ class Qdrouterd(Process):
             # teardown failed - possible router crash?
             # dump extra stuff (command line, output, log)
 
-            def tail_file(fname, line_count=50):
-                """Tail a file to a list"""
-                out = []
-                with open(fname) as f:
-                    line = f.readline()
-                    while line:
-                        out.append(line)
-                        if len(out) > line_count:
-                            out.pop(0)
-                        line = f.readline()
-                return out
-
             try:
                 for fname in [("output", self.outfile_path),
                               ("command", self.cmdfile_path)]:
@@ -832,13 +842,7 @@ class Qdrouterd(Process):
                         sys.stderr.write(f.read())
                         sys.stderr.write("\n<<<<\n")
 
-                if self.logfile:
-                    sys.stderr.write("\nRouter %s log file tail:\n>>>>\n" %
-                                     self.config.router_id)
-                    tail = tail_file(self.logfile_path)
-                    for ln in tail:
-                        sys.stderr.write("%s" % ln)
-                    sys.stderr.write("\n<<<<\n")
+                self.print_log_lines()
                 sys.stderr.flush()
             except OSError:
                 # ignore file not found in case test never opens these
@@ -1051,7 +1055,10 @@ class Qdrouterd(Process):
             return False
 
     def wait_router_connected(self, router_id, **retry_kwargs):
-        retry(lambda: self.is_router_connected(router_id), **retry_kwargs)
+        print("wait_router_connected=", router_id)
+        ret_val = retry(lambda: self.is_router_connected(router_id), **retry_kwargs)
+        if ret_val is None:
+            self.print_log_lines(line_count=None)
 
     def is_edge_routers_connected(self, num_edges=1, role='edge', num_meshes=None, **retry_kwargs):
         """
