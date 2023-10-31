@@ -20,7 +20,6 @@
 import io
 import json
 import os
-import re
 import socket
 import subprocess
 import time
@@ -510,7 +509,7 @@ class TcpAdaptorBase(TestCase):
             cls.routers.append(cls.tester.qdrouterd(name, config, wait=True))
 
         # monitor router memory usage:
-        os.environ["SKUPPER_ROUTER_ALLOC_MONITOR_SECS"] = "1"
+        #os.environ["SKUPPER_ROUTER_ALLOC_MONITOR_SECS"] = "1"
 
         cls.routers = []
         cls.test_ssl = test_ssl
