@@ -456,8 +456,11 @@ class TcpAdaptorBase(TestCase):
                 router_dict = {'mode': mode, 'id': name, 'dataConnectionCount': '4', "helloMaxAgeSeconds": '10'}
             else:
                 router_dict = {'mode': mode, 'id': name}
+            cls.logfile = "%s.log" % name
             config = [
                 ('router', router_dict),
+                ('log', {'module': 'DEFAULT', 'enable': 'info+',
+                         'includeSource': 'true', 'outputFile': cls.logfile}),
                 ('listener', {'port': cls.amqp_listener_ports[name]}),
                 ('sslProfile', {'name': 'tcp-listener-ssl-profile',
                                 'caCertFile': CA_CERT,
