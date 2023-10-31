@@ -807,7 +807,7 @@ jobs:
       CCACHE_DIR: ${{github.workspace}}/.ccache
       CCACHE_COMPRESS: 'true'
       CCACHE_MAXSIZE: '400MB'
-      QPID_SYSTEM_TEST_TIMEOUT: 400
+      QPID_SYSTEM_TEST_TIMEOUT: 200
       VERBOSE: 1
 
     steps:
