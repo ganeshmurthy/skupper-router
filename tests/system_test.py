@@ -1055,7 +1055,6 @@ class Qdrouterd(Process):
             return False
 
     def wait_router_connected(self, router_id, **retry_kwargs):
-
         ret_val = retry(lambda: self.is_router_connected(router_id), **retry_kwargs)
         print("wait_router_connected=", router_id, ret_val)
         if ret_val is None or not ret_val:

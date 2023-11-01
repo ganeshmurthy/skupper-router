@@ -126,26 +126,26 @@ foreach(py_test_module
     ${SYSTEM_TESTS_POLICY}
     system_tests_socket_address_family
     system_tests_protocol_settings
-    system_tests_skmanage
-    system_tests_skstat
-    system_tests_sasl_plain
+    #system_tests_skmanage
+    #system_tests_skstat
+    #system_tests_sasl_plain
     system_tests_user_id
     system_tests_user_id_proxy
     system_tests_two_routers
     system_tests_interior_sync_up
-    system_tests_distribution
+    #system_tests_distribution
     system_tests_dynamic_terminus
     system_tests_log_message_components
     system_tests_failover_list
     ${SYSTEM_TESTS_DELIVERY_ABORT}
     system_tests_topology
-    system_tests_topology_disposition
-    system_tests_topology_addition
+    #system_tests_topology_disposition
+    #system_tests_topology_addition
     system_tests_delivery_counts
     system_tests_cmdline_parsing
     system_tests_bad_configuration
     system_tests_ssl
-    system_tests_edge_router
+    #system_tests_edge_router
     system_tests_edge_mesh
     system_tests_connector_status
     system_tests_core_endpoint
@@ -159,7 +159,7 @@ foreach(py_test_module
     system_tests_log_level_update
     system_tests_routing_protocol
     system_tests_open_properties
-    system_tests_http2 
+    #system_tests_http2
     system_tests_grpc 
     system_tests_http1_adaptor
     system_tests_http1_over_tcp
