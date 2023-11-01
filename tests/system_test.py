@@ -1055,9 +1055,10 @@ class Qdrouterd(Process):
             return False
 
     def wait_router_connected(self, router_id, **retry_kwargs):
-        print("wait_router_connected=", router_id)
+
         ret_val = retry(lambda: self.is_router_connected(router_id), **retry_kwargs)
-        if ret_val is None:
+        print("wait_router_connected=", router_id, ret_val)
+        if ret_val is None or not ret_val:
             self.print_log_lines(line_count=None)
 
     def is_edge_routers_connected(self, num_edges=1, role='edge', num_meshes=None, **retry_kwargs):
