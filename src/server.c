@@ -918,7 +918,7 @@ static void qd_connection_free(qd_connection_t *qd_conn)
                 // We want to quickly keep cycling thru the failover urls every second.
                 delay = 1000;
             }
-            connector->state = CXTR_STATE_CONNECTING;
+            //connector->state = CXTR_STATE_INIT;
             qd_timer_schedule(connector->timer, delay);
         }
         sys_mutex_unlock(&connector->lock);
@@ -1068,20 +1068,25 @@ static bool handle(qd_server_t *qd_server, pn_event_t *e, pn_connection_t *pn_co
 
                 sys_mutex_lock(&ctx->connector->lock);
                 qd_increment_conn_index_lh(ctx);
-                // note: will transition back to STATE_CONNECTING when ctx is freed (pn_connection_free)
-                ctx->connector->state = CXTR_STATE_FAILED;
-                if (condition && pn_condition_is_set(condition)) {
-                    qd_format_string(conn_msg, sizeof(conn_msg), "[C%"PRIu64"] Connection to %s failed: %s %s",
-                                     ctx->connection_id, config->host_port, pn_condition_get_name(condition),
-                                     pn_condition_get_description(condition));
-                } else {
-                    qd_format_string(conn_msg, sizeof(conn_msg), "[C%"PRIu64"] Connection to %s failed",
-                                     ctx->connection_id, config->host_port);
+                //
+                // If the ctx->connector->state is already CXTR_STATE_FAILED, that means we have previously
+                // attempted connecting and we failed to connect.We already logged that failure once and we will not
+                // log the connection attempt failure again.
+                //
+                if (ctx->connector->state != CXTR_STATE_FAILED) {
+                    if (condition && pn_condition_is_set(condition)) {
+                        qd_format_string(conn_msg, sizeof(conn_msg), "[C%"PRIu64"] Connection to %s failed: %s %s",
+                                         ctx->connection_id, config->host_port, pn_condition_get_name(condition),
+                                         pn_condition_get_description(condition));
+                    } else {
+                        qd_format_string(conn_msg, sizeof(conn_msg), "[C%"PRIu64"] Connection to %s failed",
+                                         ctx->connection_id, config->host_port);
+                    }
+                    strncpy(ctx->connector->conn_msg, conn_msg, QD_CXTR_CONN_MSG_BUF_SIZE);
+                    qd_log(LOG_SERVER, QD_LOG_ERROR, "%s", conn_msg);
                 }
-                strncpy(ctx->connector->conn_msg, conn_msg, QD_CXTR_CONN_MSG_BUF_SIZE);
+                ctx->connector->state = CXTR_STATE_FAILED;
                 sys_mutex_unlock(&ctx->connector->lock);
-
-                qd_log(LOG_SERVER, QD_LOG_ERROR, "%s", conn_msg);
 
             } else if (ctx && ctx->listener) { /* Incoming connection */
                 if (condition && pn_condition_is_set(condition)) {
@@ -1194,7 +1199,7 @@ static void try_open_lh(qd_connector_t *connector, qd_connection_t *connection) 
         qd_log(LOG_SERVER, QD_LOG_CRITICAL, "Allocation failure connecting to %s",
                connector->config.host_port);
         connector->delay = 10000;
-        connector->state = CXTR_STATE_CONNECTING;
+        connector->state = CXTR_STATE_FAILED;
         qd_timer_schedule(connector->timer, connector->delay);
         return;
     }
@@ -1202,7 +1207,12 @@ static void try_open_lh(qd_connector_t *connector, qd_connection_t *connection) 
     sys_atomic_inc(&connector->ref_count);
 
     connector->qd_conn = qd_conn;
-    connector->state   = CXTR_STATE_OPEN;
+
+    // If there was a previous connection attempt and that attempt failed,
+    // keep the connector->state as CXTR_STATE_FAILED.
+    if (connector->state != CXTR_STATE_FAILED) {
+        connector->state   = CXTR_STATE_OPEN;
+    }
     connector->delay   = 5000;
 
     //
@@ -1356,16 +1366,15 @@ static void try_open_cb(void *context)
     if (!ctx) {
         qd_log(LOG_SERVER, QD_LOG_CRITICAL, "Allocation failure connecting to %s", ct->config.host_port);
         ct->delay = 10000;
-        ct->state = CXTR_STATE_CONNECTING;
+        ct->state = CXTR_STATE_FAILED;
         qd_timer_schedule(ct->timer, ct->delay);
         return;
     }
 
     sys_mutex_lock(&ct->lock);
 
-    if (ct->state == CXTR_STATE_CONNECTING || ct->state == CXTR_STATE_INIT) {
+    if (ct->state == CXTR_STATE_FAILED || ct->state == CXTR_STATE_INIT) {
         // else deleted or failed - on failed wait until after connection is freed
-        // and state is set to CXTR_STATE_CONNECTING (timer is rescheduled then)
         try_open_lh(ct, ctx);
         ctx = 0;  // owned by ct
     }
@@ -1743,7 +1752,6 @@ bool qd_connector_connect(qd_connector_t *ct)
     assert(ct->qd_conn == 0);
     ct->qd_conn = 0;
     ct->delay   = 0;
-    ct->state   = CXTR_STATE_CONNECTING;
     qd_timer_schedule(ct->timer, ct->delay);
     sys_mutex_unlock(&ct->lock);
     return true;

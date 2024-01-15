@@ -51,7 +51,6 @@ void qd_server_config_free(qd_server_config_t *cf);
 
 typedef enum {
     CXTR_STATE_INIT = 0,
-    CXTR_STATE_CONNECTING,
     CXTR_STATE_OPEN,
     CXTR_STATE_FAILED,
     CXTR_STATE_DELETED  // by management

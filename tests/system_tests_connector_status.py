@@ -108,7 +108,7 @@ class ConnectorStatusTest(TestCase):
         conn_status = output[0].get('connectionStatus')
         conn_msg = output[0].get('connectionMsg')
 
-        if conn_status == 'CONNECTING' and "Connection" in conn_msg and "failed" in conn_msg:
+        if conn_status == 'FAILED' and "Connection" in conn_msg and "failed" in conn_msg:
             self.success = True
         else:
             self.schedule_B_connector_test()

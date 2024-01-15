@@ -725,9 +725,6 @@ QD_EXPORT qd_error_t qd_entity_refresh_connector(qd_entity_t* entity, void *impl
 
     const char *state_info = 0;
     switch (connector->state) {
-    case CXTR_STATE_CONNECTING:
-      state_info = "CONNECTING";
-      break;
     case CXTR_STATE_OPEN:
       state_info = "SUCCESS";
       break;
@@ -959,7 +956,7 @@ QD_EXPORT void qd_connection_manager_start(qd_dispatch_t *qd)
     }
 
     while (ct) {
-        if (ct->state == CXTR_STATE_OPEN || ct->state == CXTR_STATE_CONNECTING) {
+        if (ct->state == CXTR_STATE_OPEN) {
             ct = DEQ_NEXT(ct);
             continue;
         }
@@ -969,7 +966,7 @@ QD_EXPORT void qd_connection_manager_start(qd_dispatch_t *qd)
     }
 
     while (dc) {
-        if (dc->state == CXTR_STATE_OPEN || dc->state == CXTR_STATE_CONNECTING) {
+        if (dc->state == CXTR_STATE_OPEN) {
             dc = DEQ_NEXT(dc);
             continue;
         }
