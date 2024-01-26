@@ -888,16 +888,14 @@ jobs:
       - name: skupper-router cmake build/install
         run: cmake --build "${RouterBuildDir}" --config ${BuildType} --target install --parallel 6
 
-  container:
-    name: Container image
+  container_amd64:
+    name: amd64 container image
     runs-on: ubuntu-latest
     env:
       ImageName: local/skupper-router:local
 
     steps:
-
       - uses: actions/checkout@v4
-
       - name: Install brew
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -956,6 +954,18 @@ jobs:
         run: |
           podman run --rm --volume ${PODMAN_SOCK}:/var/run/docker.sock docker.io/anchore/grype:latest \
             --only-fixed --fail-on low ${{ env.ImageName }}
+
+  container_arm64:
+    name: arm64 container image
+    runs-on: self-hosted
+    env:
+      ImageName: local/skupper-router:local
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Containerfile
+        run: |
+          podman build -t ${{ env.ImageName }} -f ./Containerfile .
 
   rpm:
     name: 'Build and test RPM (${{ matrix.container }}:${{ matrix.containerTag }})'
