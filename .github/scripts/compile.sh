@@ -82,7 +82,6 @@ cmake -S "${LWS_DIR}" -B "${LWS_BUILD_DIR}" \
   -DLWS_LINK_TESTAPPS_DYNAMIC=ON \
   -DLWS_WITH_LIBUV=OFF \
   -DLWS_WITHOUT_BUILTIN_GETIFADDRS=ON \
-  -DLWS_USE_BUNDLED_ZLIB=OFF \
   -DLWS_WITHOUT_BUILTIN_SHA1=ON \
   -DLWS_WITH_STATIC=OFF \
   -DLWS_IPV6=ON \
@@ -147,11 +146,12 @@ cmake --install "$PROTON_BUILD_DIR"
 # proton can be run successfully.
 python3 -m pip install "$(find "$PROTON_BUILD_DIR/python/" -name 'python-qpid-proton-*.tar.gz')"
 
+
 cmake -S "${SKUPPER_DIR}" -B "${SKUPPER_BUILD_DIR}" \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DProton_USE_STATIC_LIBS=ON \
   -DProton_DIR="${PROTON_BUILD_DIR}/install/lib64/cmake/Proton" \
-  -DENABLE_PROFILE_GUIDED_OPTIMIZATION=ON \
+  -DENABLE_PROFILE_GUIDED_OPTIMIZATION=OFF \
   -DVERSION="${VERSION}" \
   -DCMAKE_INSTALL_PREFIX=/usr
 cmake --build "${SKUPPER_BUILD_DIR}" --verbose
