@@ -31,7 +31,7 @@ on:
         default: false
 jobs:
   build-image-amd64:
-    name: Rebuild and publish skupper-router amd64 image for a released tag
+    name: Rebuild and publish skupper-router amd64 image for an already released tag
     runs-on: ubuntu-latest
     steps:
       - name: Get the tag name and set it as the CONTAINER_TAG env variable.
@@ -50,10 +50,10 @@ jobs:
           # Verify if build number is unique, otherwise fail
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
-            echo 'release-respin.yml(job:build-image-amd64) setting PUSH_LATEST=true, will push :latest tag'
+            echo 'release-respin.yml(job: build-image-amd64) setting PUSH_LATEST=true, will push :latest tag'
             export PUSH_LATEST=true
           else
-            echo 'release-respin.yml(job:build-image-amd64) not setting PUSH_LATEST, will not push :latest tag'
+            echo 'release-respin.yml(job: build-image-amd64) not setting PUSH_LATEST, will not push :latest tag'
           fi
           curl -s "https://quay.io/api/v1/repository/skupper/skupper-router/tag/?filter_tag_name=eq:${VERSION}-${BUILD_NUMBER}" | \
             jq .tags | grep -E '^\[\]$' || \
@@ -65,7 +65,7 @@ jobs:
           CONTAINER_PASSWORD: '${{ secrets.DOCKER_PASSWORD }}'
 
   build-image-arm64:
-    name: Rebuild and publish skupper-router arm64 image for a released tag
+    name: Rebuild and publish skupper-router arm64 image for an already released tag
     runs-on: self-hosted
     steps:
       - name: Get the tag name and set it as the CONTAINER_TAG env variable.
@@ -83,12 +83,11 @@ jobs:
           export VERSION="${{ env.CONTAINER_TAG }}"
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
-            echo 'release-respin.yml(job:build-image-arm64) setting PUSH_LATEST=true, will push :latest tag'
+            echo 'release-respin.yml(job: build-image-arm64) setting PUSH_LATEST=true, will push :latest tag'
             export PUSH_LATEST=true
           else
-            echo 'release-respin.yml(job:build-image-arm64) not setting PUSH_LATEST, will not push :latest tag'
+            echo 'release-respin.yml(job: build-image-arm64) not setting PUSH_LATEST, will not push :latest tag'
           fi
-          # This will get the build number from $GITHUB_ENV
           export PLATFORM=arm64
           ./.github/scripts/image.sh
         env:
@@ -111,8 +110,14 @@ jobs:
           # Only accepts tag if build_number is higher than one
           [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"
-          # This is a release candidate build which means we WON'T push the :latest tag to the container repo.
-          unset PUSH_LATEST
+          export VERSION="${{ env.CONTAINER_TAG }}"
+          CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
+          if [ "${CAN_PUSH_LATEST}" == "true" ]; then
+            echo 'release-respin.yml(job: create-manifest) setting PUSH_LATEST=true, will push :latest tag'
+            export PUSH_LATEST=true
+          else
+            echo 'release-respin.yml(job: create-manifest) not setting PUSH_LATEST, will not push :latest tag'
+          fi
           ./.github/scripts/manifest.sh
         env:
           CONTAINER_USER: '${{ secrets.DOCKER_USER }}'
