@@ -39,14 +39,11 @@ jobs:
 
           conclusion=$(jq < jobs.json --raw-output '.jobs[] |  select( .name == "Container image (linux/amd64)") | .conclusion')
           echo ${conclusion}
-
           [[ ${conclusion} == "success" ]]
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v4
-
       - name: Build and publish the main amd64 image
         run: |
           # The version on main will be 0.0.0+<commit-sha>-main
