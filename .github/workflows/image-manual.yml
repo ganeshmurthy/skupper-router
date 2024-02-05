@@ -88,6 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
+          export CONTAINER_TAG="${{github.event.inputs.containerTag}}"
           export PROJECT_TAG="${CONTAINER_TAG}"
           # The version of skupper-router should be the same as the version of the image.
           export VERSION="${{ CONTAINER_TAG }}"
