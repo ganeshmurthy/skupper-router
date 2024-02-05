@@ -63,6 +63,8 @@ jobs:
               # Only accepts tag if build_number is higher than one
               # Verify if build number is unique, otherwise fail
               [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          else
+              echo "CONTAINER_TAG is main"
           fi
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
@@ -94,6 +96,8 @@ jobs:
               # Only accepts tag if build_number is higher than one
               # Verify if build number is unique, otherwise fail
               [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          else
+              echo "CONTAINER_TAG is main"
           fi
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
@@ -134,6 +138,8 @@ jobs:
               # Only accepts tag if build_number is higher than one
               # Verify if build number is unique, otherwise fail
               [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          else
+              echo "CONTAINER_TAG is main"
           fi
           export PROJECT_TAG="${{ CONTAINER_TAG }}"
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
