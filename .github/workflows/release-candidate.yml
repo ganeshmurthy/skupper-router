@@ -102,7 +102,6 @@ jobs:
         run: |
           export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"
-          export BUILD_NUMBER="${BUILD_NUMBER}"
           unset PUSH_LATEST
           ./.github/scripts/manifest.sh
         env:
