@@ -44,7 +44,7 @@ jobs:
         run: |
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"
           export VERSION="${{ env.CONTAINER_TAG }}"
-          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
           # Only accepts tag if build_number is higher than one
           [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
           # Verify if build number is unique, otherwise fail
@@ -76,7 +76,7 @@ jobs:
           ref: ${{github.event.inputs.tag}}
       - name: Build and publish skupper-router arm64 image
         run: |
-          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
           # Only accepts tag if build_number is higher than one
           [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"
@@ -101,12 +101,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install brew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo "PATH=/home/linuxbrew/.linuxbrew/bin:${PATH}" >> "${GITHUB_ENV}"
+
+      - name: Install podman
+        run: |
+          brew install podman
+          brew services start podman
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
       - name: Get the tag name and set it as the CONTAINER_TAG env variable.
         run:  |
           echo "CONTAINER_TAG=${{github.event.inputs.tag}}" >> $GITHUB_ENV
       - name: Pull skupper-router amd64 and arm64 images and create/push manifest
         run: |
-          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
           # Only accepts tag if build_number is higher than one
           [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"

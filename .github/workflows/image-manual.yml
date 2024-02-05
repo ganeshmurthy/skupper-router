@@ -58,6 +58,12 @@ jobs:
           export PROJECT_TAG="${{ CONTAINER_TAG }}"
           # The version of skupper-router should be the same as the version of the image.
           export VERSION="${{ CONTAINER_TAG }}"
+          if [ "${CONTAINER_TAG}" != "main" ]; then
+              export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+              # Only accepts tag if build_number is higher than one
+              # Verify if build number is unique, otherwise fail
+              [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          fi
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
             echo 'image-manual.yml(job:build-manual-amd64) setting PUSH_LATEST=true, will push :latest tag'
@@ -83,6 +89,12 @@ jobs:
           export PROJECT_TAG="${{ CONTAINER_TAG }}"
           # The version of skupper-router should be the same as the version of the image.
           export VERSION="${{ CONTAINER_TAG }}"
+          if [ "${CONTAINER_TAG}" != "main" ]; then
+              export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+              # Only accepts tag if build_number is higher than one
+              # Verify if build number is unique, otherwise fail
+              [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          fi
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
             echo 'image-manual.yml(job:build-image-arm64) setting PUSH_LATEST=true, will push :latest tag'
@@ -105,8 +117,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install brew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo "PATH=/home/linuxbrew/.linuxbrew/bin:${PATH}" >> "${GITHUB_ENV}"
+      - name: Install podman
+        run: |
+          brew install podman
+          brew services start podman
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
       - name: Pull skupper-router amd64 and arm64 images and create/push manifest
         run: |
+          if [ "${CONTAINER_TAG}" != "main" ]; then
+              export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+              # Only accepts tag if build_number is higher than one
+              # Verify if build number is unique, otherwise fail
+              [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
+          fi
           export PROJECT_TAG="${{ CONTAINER_TAG }}"
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
