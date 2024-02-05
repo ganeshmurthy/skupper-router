@@ -101,7 +101,7 @@ jobs:
       - run: |
           export PROJECT_TAG="${CONTAINER_TAG}"
           # The version of skupper-router should be the same as the version of the image.
-          export VERSION="${{ CONTAINER_TAG }}"
+          export VERSION="${CONTAINER_TAG}"
           if [ "${CONTAINER_TAG}" != "main" ]; then
               export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
               # Only accepts tag if build_number is higher than one
