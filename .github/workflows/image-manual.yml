@@ -154,7 +154,7 @@ jobs:
           else
               echo "CONTAINER_TAG is main"
           fi
-          export PROJECT_TAG="${ CONTAINER_TAG}"
+          export PROJECT_TAG="${CONTAINER_TAG}"
           CAN_PUSH_LATEST='${{github.event.inputs.canPushLatestTag}}'
           if [ "${CAN_PUSH_LATEST}" == "true" ]; then
             echo 'image-manual.yml(job:pull-images) setting PUSH_LATEST=true, will push :latest tag'
