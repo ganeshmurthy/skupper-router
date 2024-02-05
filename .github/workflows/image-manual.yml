@@ -144,6 +144,7 @@ jobs:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
       - name: Pull skupper-router amd64 and arm64 images and create/push manifest
         run: |
+          export VERSION="${CONTAINER_TAG}"
           if [ "${CONTAINER_TAG}" != "main" ]; then
               export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq .tags[].name | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
               echo "BUILD_NUMER(create-manifest)=${BUILD_NUMBER}"
