@@ -84,11 +84,21 @@ jobs:
   build-image-arm64:
     name: Build and publish skupper-router arm64 image
     runs-on: self-hosted
-    # If for some reason the build-manual-amd64 job fails, why proceed with this job ?
     steps:
+      - run: |
+          # validate CONTAINER_TAG
+          [[ ! "${CONTAINER_TAG}" =~ ^[a-z0-9][a-z0-9.-]+[a-z0-9]$ ]] && echo "invalid tag - it must begin and end with letter or digit and contains - and ." && exit 1
+          protected=(latest nightly master)
+          for ptag in ${protected[@]}; do
+            if [[ "${ptag}" = "${CONTAINER_TAG}" ]]; then
+              echo "${ptag} cannot be used (protected tag)"
+              exit 1
+            fi
+          done
+        env:
+          CONTAINER_TAG: '${{github.event.inputs.containerTag}}'
       - uses: actions/checkout@v4
       - run: |
-          export CONTAINER_TAG="${{github.event.inputs.containerTag}}"
           export PROJECT_TAG="${CONTAINER_TAG}"
           # The version of skupper-router should be the same as the version of the image.
           export VERSION="${{ CONTAINER_TAG }}"
