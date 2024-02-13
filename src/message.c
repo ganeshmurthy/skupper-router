@@ -1570,6 +1570,7 @@ static void qd_message_receive_cutthrough(qd_message_t *in_msg, pn_delivery_t *d
                 // it to the produced buffer list.
                 //
                 qd_buffer_insert(buf, rc);
+                qd_log(LOG_MESSAGE, QD_LOG_INFO, "qd_message_receive_cutthrough - new buffer created %zu, use_slot=%u", rc, use_slot);
                 DEQ_INSERT_TAIL(content->uct_slots[use_slot], buf);
                 produced_data = true;
             }
