@@ -19,11 +19,6 @@
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as builder
 
-# upgrade first to avoid fixable vulnerabilities
-# do this in builder as well as in buildee, so builder does not have different pkg versions from buildee image
-RUN microdnf -y upgrade --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0 --setopt=keepcache=0 \
- && microdnf clean all -y
-
 RUN microdnf -y --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install \
     rpm-build \
     gcc gcc-c++ make cmake pkgconfig \
@@ -53,10 +48,6 @@ RUN if [ "$PLATFORM" = "amd64" ]; then tar zxpf /qpid-proton-image.tar.gz --one-
 RUN if [ "$PLATFORM" = "arm64" ]; then tar zxpf /qpid-proton-image.tar.gz --one-top-level=/image && tar zxpf /skupper-router-image.tar.gz --one-top-level=/image && tar zxpf /libwebsockets-image.tar.gz --one-top-level=/image; fi
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
-
-# upgrade first to avoid fixable vulnerabilities
-RUN microdnf -y upgrade --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0 --setopt=keepcache=0 \
- && microdnf clean all -y
 
 RUN microdnf -y --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install \
     glibc \
