@@ -369,7 +369,7 @@ static int AMQP_conn_wake_handler(void *type_context, qd_connection_t *conn, voi
             qdr_delivery_ref_t *dref = DEQ_HEAD(conn->outbound_cutthrough_worklist);
             if (!!dref) {
                 DEQ_REMOVE_HEAD(conn->outbound_cutthrough_worklist);
-                dref->dlv->cutthrough_list_ref = 0;
+                dref->dlv->in_cutthrough_list = false;
             }
             sys_spinlock_unlock(&conn->outbound_cutthrough_spinlock);
 
@@ -420,7 +420,7 @@ static int AMQP_conn_wake_handler(void *type_context, qd_connection_t *conn, voi
             qdr_delivery_ref_t *dref = DEQ_HEAD(conn->inbound_cutthrough_worklist);
             if (!!dref) {
                 DEQ_REMOVE_HEAD(conn->inbound_cutthrough_worklist);
-                dref->dlv->cutthrough_list_ref = 0;
+                dref->dlv->in_cutthrough_list = false;
             }
             sys_spinlock_unlock(&conn->inbound_cutthrough_spinlock);
 
@@ -1174,10 +1174,10 @@ static int AMQP_link_flow_handler(void* context, qd_link_t *link)
                             bool used = false;
 
                             sys_spinlock_lock(&conn->outbound_cutthrough_spinlock);
-                            if (!qdlv->cutthrough_list_ref) {
+                            if (!qdlv->in_cutthrough_list) {
                                 DEQ_ITEM_INIT(dref);
                                 dref->dlv = qdlv;
-                                qdlv->cutthrough_list_ref = dref;
+                                qdlv->in_cutthrough_list = true;
                                 DEQ_INSERT_TAIL(conn->outbound_cutthrough_worklist, dref);
                                 qdr_delivery_incref(qdlv, "Recover from Q3 stall");
                                 used = true;

@@ -44,10 +44,10 @@ static void activate_connection(qd_message_activation_t *activation, qd_directio
         bool                     notify   = false;
 
         sys_spinlock_lock(spinlock);
-        if (!activation->delivery->cutthrough_list_ref) {
+        if (!activation->delivery->in_cutthrough_list) {
             DEQ_ITEM_INIT(dref);
             dref->dlv = activation->delivery;
-            activation->delivery->cutthrough_list_ref = dref;
+            activation->delivery->in_cutthrough_list = true;
             DEQ_INSERT_TAIL(*worklist, dref);
             qdr_delivery_incref(activation->delivery, "Cut-through activation worklist");
             notify = true;
