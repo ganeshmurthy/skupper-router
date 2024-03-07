@@ -614,10 +614,18 @@ jobs:
         -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
         -DBUILD_TLS=ON
       RouterCMakeExtraArgs: >
-        -DCMAKE_C_COMPILER_LAUNCHER=ccache
-        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-        -DPython_EXECUTABLE=/usr/bin/${{matrix.python || 'python3'}}
-        -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
+        if [[ ${matrix.buildType} == "Coverage" ]]; then
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DPython_EXECUTABLE=/usr/bin/${{matrix.python || 'python3'}}
+          -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
+          -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+        else
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DPython_EXECUTABLE=/usr/bin/${{matrix.python || 'python3'}}
+          -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
+        fi
 
       CCACHE_BASEDIR: ${{github.workspace}}
       CCACHE_DIR: ${{github.workspace}}/.ccache
