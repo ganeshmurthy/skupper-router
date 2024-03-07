@@ -79,6 +79,7 @@ jobs:
         -DRUNTIME_CHECK=${{matrix.runtimeCheck}}
         -DSANITIZE_PYTHON=OFF
         -DBUILD_BENCHMARKS=ON
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
 
       CCACHE_BASEDIR: ${{github.workspace}}
       CCACHE_DIR: ${{github.workspace}}/.ccache
@@ -335,6 +336,7 @@ jobs:
         -DPython_EXECUTABLE=/usr/bin/python3
         -DRUNTIME_CHECK=OFF
         -DENABLE_PROFILE_GUIDED_OPTIMIZATION=OFF
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
     steps:
       - uses: actions/checkout@v4
         with:
