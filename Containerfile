@@ -44,7 +44,7 @@ ENV LWS_SOURCE_URL=${LWS_SOURCE_URL:-https://github.com/warmcat/libwebsockets/ar
 ENV LIBUNWIND_SOURCE_URL=${LIBUNWIND_SOURCE_URL:-https://github.com/libunwind/libunwind/archive/refs/tags/${LIBUNWIND_VERSION}.tar.gz}
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
-ARG VERSION=0.0.0
+ARG VERSION=UNKNOWN
 ENV VERSION=$VERSION
 ARG PLATFORM=amd64
 ENV PLATFORM=$PLATFORM
