@@ -17,17 +17,19 @@
 # under the License.
 #
 
-configure_file(${CMAKE_SOURCE_DIR}/python/skupper_router/_skupper_router_site.py.in
-               ${CMAKE_CURRENT_BINARY_DIR}/_skupper_router_site.py)
-
-add_custom_target(NAME ALL
-                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/python/skupper_router ${CMAKE_CURRENT_BINARY_DIR}/skupper_router
-                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/_skupper_router_site.py ${CMAKE_CURRENT_BINARY_DIR}/skupper_router)
-
+# Private python modules, not in standard python site dir.
 install(DIRECTORY skupper_router_internal DESTINATION ${QPID_DISPATCH_HOME}/python)
-install(DIRECTORY skupper_router DESTINATION ${QPID_DISPATCH_HOME}/python)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/_skupper_router_site.py
-        DESTINATION ${QPID_DISPATCH_HOME}/python/skupper_router/)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
+               
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/skupper_router_site.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/skupper_router_site.py)               
+
+
+# Install script for public python modules using setup.py install
+install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} setup.py -v install --single-version-externally-managed --record=/dev/null --prefix=${CMAKE_INSTALL_PREFIX} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/skupper_router/management/skrouter.json

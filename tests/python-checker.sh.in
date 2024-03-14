@@ -28,9 +28,9 @@ flake8 --verbose --count --show-source --config ${CMAKE_BINARY_DIR}/tests/setup.
     ${CMAKE_SOURCE_DIR}/tests \
     ${CMAKE_SOURCE_DIR}/tools \
     ${CMAKE_SOURCE_DIR}/scripts \
-    ${CMAKE_BINARY_DIR}/python/_skupper_router_site.py \
-    ${CMAKE_BINARY_DIR}/skstat \
-    ${CMAKE_BINARY_DIR}/skmanage
+    ${CMAKE_BINARY_DIR}/python/skupper_router_site.py \
+    ${CMAKE_SOURCE_DIR}/tools/skstat \
+    ${CMAKE_SOURCE_DIR}/tools/skmanage
 echo ----Starting pylint checks----
 pylint --jobs 4 --rcfile ${CMAKE_BINARY_DIR}/tests/pylintrc \
     --ignore friendship_server.py,friendship_pb2.py,friendship_pb2_grpc.py \
@@ -40,7 +40,7 @@ pylint --jobs 4 --rcfile ${CMAKE_BINARY_DIR}/tests/pylintrc \
     ${CMAKE_SOURCE_DIR}/tests \
     ${CMAKE_SOURCE_DIR}/tools \
     ${CMAKE_SOURCE_DIR}/scripts \
-    ${CMAKE_BINARY_DIR}/python/_skupper_router_site.py \
+    ${CMAKE_BINARY_DIR}/python/skupper_router_site.py \
     ${CMAKE_SOURCE_DIR}/tools/skstat \
     ${CMAKE_SOURCE_DIR}/tools/skmanage
 #echo ----Starting mypy checks----
