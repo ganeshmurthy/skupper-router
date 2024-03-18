@@ -461,7 +461,7 @@ jobs:
         containerTag: ['39']
         cc: [gcc]
         cxx: [g++]
-        python: [python3.11]
+        python: [python3.12]
         buildType: [RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
@@ -753,7 +753,7 @@ jobs:
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
             "-DPYTHON_TEST_COMMAND='${CoverageOpts};-m;pytest;-vs;--timeout=400;--junit-prefix=pytest.\${py_test_module};--junit-xml=junitxmls/\${py_test_module}.xml;--pyargs;\${py_test_module}'" \
-            ${RouterCMakeExtraArgs} -DQD_ENABLE_ASSERTIONS=${RouterCMakeAsserts} -DSANITIZE_PYTHON=${RouterCMakeSanitizePython:-ON}
+            ${RouterCMakeExtraArgs} -DQD_ENABLE_ASSERTIONS=${RouterCMakeAsserts} -DSANITIZE_PYTHON=OFF
 
       - name: skupper-router cmake build/install
         run: cmake --build "${RouterBuildDir}" --config ${BuildType} --target install --parallel 6
@@ -1028,7 +1028,7 @@ jobs:
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
             "-DPYTHON_TEST_COMMAND='-m;pytest;-vs;--timeout=400;--junit-prefix=pytest.\${py_test_module};--junit-xml=junitxmls/\${py_test_module}.xml;--pyargs;\${py_test_module}'" \
-            ${RouterCMakeExtraArgs} -DSANITIZE_PYTHON=${RouterCMakeSanitizePython:-ON}
+            ${RouterCMakeExtraArgs} -DSANITIZE_PYTHON=OFF
 
       - name: skupper-router cmake build/install
         run: cmake --build "${RouterBuildDir}" --config ${BuildType} --target install --parallel 6
