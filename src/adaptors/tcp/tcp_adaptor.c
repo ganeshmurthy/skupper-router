@@ -264,15 +264,19 @@ static void on_activate(void *context)
     qdr_tcp_connection_t* conn = (qdr_tcp_connection_t*) context;
 
     qd_log(LOG_TCP_ADAPTOR, QD_LOG_DEBUG, "[C%" PRIu64 "] on_activate", conn->conn_id);
-    while (qdr_connection_process(conn->qdr_conn)) {}
-    if (conn->is_egress_dispatcher_conn && conn->connector_closed) {
-        detach_links(conn);
-        qdr_connection_set_context(conn->qdr_conn, 0);
-        qdr_connection_closed(conn->qdr_conn);
-        qd_connection_counter_dec(QD_PROTOCOL_TCP);
-        conn->qdr_conn = 0;
-        free_qdr_tcp_connection(conn);
+    LOCK(qd_server_get_activation_lock(tcp_adaptor->core->qd->server));
+    if (conn->qdr_conn) {
+        while (qdr_connection_process(conn->qdr_conn)) {}
+        if (conn->is_egress_dispatcher_conn && conn->connector_closed) {
+            detach_links(conn);
+            qdr_connection_set_context(conn->qdr_conn, 0);
+            qdr_connection_closed(conn->qdr_conn);
+            qd_connection_counter_dec(QD_PROTOCOL_TCP);
+            conn->qdr_conn = 0;
+            free_qdr_tcp_connection(conn);
+        }
     }
+    UNLOCK(qd_server_get_activation_lock(tcp_adaptor->core->qd->server));
 }
 
 /**
@@ -684,16 +688,18 @@ static void handle_disconnected(qdr_tcp_connection_t* conn)
         qdr_delivery_decref(tcp_adaptor->core, conn->initial_delivery, "tcp-adaptor.handle_disconnected - initial_delivery");
         conn->initial_delivery = 0;
     }
+    LOCK(qd_server_get_activation_lock(tcp_adaptor->core->qd->server));
     if (conn->qdr_conn) {
         qdr_connection_set_context(conn->qdr_conn, 0);
         qdr_connection_closed(conn->qdr_conn);
         qd_connection_counter_dec(QD_PROTOCOL_TCP);
         conn->qdr_conn = 0;
+        // Do the actual deletion of the tcp connection instance on the core thread to prevent the core from running
+        // qdr_tcp_activate_CT on a freed tcp connection pointer:
+        qdr_del_tcp_connection(conn);
     }
+    UNLOCK(qd_server_get_activation_lock(tcp_adaptor->core->qd->server));
 
-    // Do the actual deletion of the tcp connection instance on the core thread to prevent the core from running
-    // qdr_tcp_activate_CT on a freed tcp connection pointer:
-    qdr_del_tcp_connection(conn);
 }
 
 static int read_message_body(qdr_tcp_connection_t *conn, qd_message_t *msg, pn_raw_buffer_t *buffers, int count)
@@ -1758,6 +1764,8 @@ void qd_dispatch_delete_tcp_connector_legacy(qd_dispatch_t *qd, qd_tcp_connector
 
         // need to close the pseudo-connection used for dispatching
         // deliveries out to live connections:
+        qdr_tcp_connection_t* dispatcher_conn = (qdr_tcp_connection_t*) ct->dispatcher_conn;
+        dispatcher_conn->connector_closed = true;
         handle_disconnected((qdr_tcp_connection_t*) ct->dispatcher_conn);
         ct->dispatcher_conn = 0;
         DEQ_REMOVE(tcp_adaptor->connectors, ct);
