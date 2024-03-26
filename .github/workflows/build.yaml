@@ -286,6 +286,9 @@ jobs:
 
       - name: CTest
         working-directory: ${{env.RouterBuildDir}}
+        with:
+          python-version: 3.11
+          architecture: x64
         run: |
           sudo sysctl -w kernel.core_pattern="coredump.%e.%p"
           ulimit -c unlimited
