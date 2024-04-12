@@ -28,6 +28,9 @@ struct qdpo_config_t {
 ALLOC_DECLARE(qdpo_config_t);
 ALLOC_DEFINE(qdpo_config_t);
 
+ALLOC_DECLARE(qdpo_t);
+ALLOC_DEFINE(qdpo_t);
+
 qdpo_config_t *qdpo_config(qdpo_use_address_t use_address, bool allow_all_protocols)
 {
     qdpo_config_t *config = new_qdpo_config_t();
@@ -57,23 +60,14 @@ void qdpo_config_add_address(qdpo_config_t *config, const char *field, const cha
     // TODO
 }
 
-
-struct qdpo_t {
-    qdpo_config_t *config;
-};
-
-ALLOC_DECLARE(qdpo_t);
-ALLOC_DEFINE(qdpo_t);
-
-
-qdpo_t *protocol_observer(const char *base, qdpo_config_t *config)
+qdpo_t *protocol_observer(const char *protocol, void *context)
 {
-    qdpo_t *observer = new_qdpo_t();
-    ZERO(observer);
-
-    observer->config = config;
-
-    return observer;
+    if (strcmp(protocol, "http2") == 0) {
+        return qd_http2_protocol_observer(context);
+    } else if (strcmp(protocol, "http1") == 0) {
+        return 0;
+    }
+    return 0;
 }
 
 

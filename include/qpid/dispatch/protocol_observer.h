@@ -67,8 +67,27 @@ void qdpo_config_add_exception_protocol(qdpo_config_t *config, const char *proto
 void qdpo_config_add_address(qdpo_config_t *config, const char *field, const char *value, const char *address);
 
 
+typedef void (*qd_http_observe_t) (void               *context,
+                                         unsigned char *     buf,
+                                         size_t              buf_size,
+                                         bool                request);
+
+typedef void (*qd_http_connection_init_t) (void *context);
+
+typedef void (*qd_http_connection_final_t) (void *context);
+
 typedef struct qdpo_t qdpo_t;
+typedef struct qd_http2_po_t qd_http2_po_t;
 typedef void* qdpo_transport_handle_t;
+
+struct qdpo_t {
+    qdpo_config_t *config;
+    qd_http_observe_t   observe;
+    qd_http_connection_init_t connection_init;
+    qd_http_connection_final_t connection_final;
+};
+
+qdpo_t *qd_http2_protocol_observer(void *context);
 
 /**
  * Create a new protocol observer.  Protocol observers take raw octets and attempt to detect the application protocol
@@ -78,7 +97,7 @@ typedef void* qdpo_transport_handle_t;
  * @param config Configuration returned by qdpo_config
  * @return qdpo_t* Newly allocated observer
  */
-qdpo_t *protocol_observer(const char *base, qdpo_config_t *config);
+qdpo_t *protocol_observer(const char *protocol, void *context);
 
 /**
  * Free an allocated observer

@@ -203,6 +203,7 @@ message(STATUS "Found Proton: ${Proton_LOCATION} (found version \"${Proton_VERSI
 
 # http2 support
 find_package(libnghttp2 1.33.0 REQUIRED)
+message(STATUS "Found nghttp2: ${libnghttp2_LIBDIR} (found version \"${libnghttp2_VERSION}\")" )
 # Web Sockets
 find_package(libwebsockets 4.0.1 REQUIRED)
 

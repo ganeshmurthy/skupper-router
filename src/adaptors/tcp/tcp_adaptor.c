@@ -251,15 +251,9 @@ static void TL_setup_listener(qd_tcp_listener_t *li)
     vflow_set_string(li->common.vflow, VFLOW_ATTRIBUTE_DESTINATION_PORT, li->adaptor_config->port);
     vflow_set_string(li->common.vflow, VFLOW_ATTRIBUTE_VAN_ADDRESS,      li->adaptor_config->address);
     vflow_set_uint64(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L4,    0);
+    vflow_set_uint64(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L7,    0);
     vflow_add_rate(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L4, VFLOW_ATTRIBUTE_FLOW_RATE_L4);
-
-    //
-    // Set up the protocol observer
-    //
-    // TODO - add configuration to the listener to influence whether and how the observer is set up.
-    //
-    li->protocol_observer_config = qdpo_config(0, true);
-    li->protocol_observer = protocol_observer("tcp", li->protocol_observer_config);
+    vflow_add_rate(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L7, VFLOW_ATTRIBUTE_FLOW_RATE_L7);
 
     //
     // Create an adaptor listener. This listener will automatically create a listening socket when there is at least one
@@ -369,6 +363,9 @@ static void qdr_core_free_tcp_resource_CT(qdr_core_t *core, qdr_action_t *action
         sys_atomic_destroy(&conn->core_activation);
         sys_atomic_destroy(&conn->raw_opened);
         sys_mutex_free(&conn->activation_lock);
+        if(conn->protocol_observer) {
+            conn->protocol_observer->connection_final(conn);
+        }
         free_qd_tcp_connection_t(conn);
     } else {
         // Core does not hold a reference to a listener so they are not freed here
@@ -728,9 +725,11 @@ static uint64_t produce_read_buffers_XSIDE_IO(qd_tcp_connection_t *conn, qd_mess
                 qd_buffer_insert(buf, raw_buffers[i].size);
                 octet_count += raw_buffers[i].size;
                 if (qd_buffer_size(buf) > 0) {
+                    printf("produce_read_buffers_XSIDE_IO\n");
                     DEQ_INSERT_TAIL(qd_buffers, buf);
-                    if (conn->listener_side && !!conn->observer_handle) {
-                        qdpo_data(conn->observer_handle, true, buf, 0);
+                    if (conn->listener_side) {
+                        //qdpo_data(conn->observer_handle, true, buf, 0);
+                        conn->protocol_observer->observe(conn, qd_buffer_base(buf), qd_buffer_size(buf), true);
                     }
                 } else {
                     qd_buffer_free(buf);
@@ -768,8 +767,8 @@ static uint64_t consume_write_buffers_XSIDE_IO(qd_tcp_connection_t *conn, qd_mes
             pn_raw_buffer_t raw_buffers[actual];
             qd_buffer_t *buf = DEQ_HEAD(buffers);
             for (size_t i = 0; i < actual; i++) {
-                if (conn->listener_side && !!conn->observer_handle) {
-                    qdpo_data(conn->observer_handle, false, buf, 0);
+                if (conn->listener_side) {
+                    conn->protocol_observer->observe(conn, qd_buffer_base(buf), qd_buffer_size(buf), false);
                 }
                 raw_buffers[i].context  = (uintptr_t) buf;
                 raw_buffers[i].bytes    = (char*) qd_buffer_base(buf);
@@ -811,7 +810,7 @@ static uint64_t copy_message_body_TLS_XSIDE_IO(qd_tcp_connection_t *conn, qd_mes
             clone->size = size;
             memcpy(qd_buffer_base(clone), qd_buffer_base(conn->outbound_body) + offset, size);
             if (observe) {
-                qdpo_data(conn->observer_handle, false, clone, 0);
+                //qdpo_data(conn->observer_handle, false, clone, 0);
             }
             DEQ_INSERT_TAIL(*buffers, clone);
         }
@@ -853,7 +852,7 @@ static uint64_t consume_message_body_XSIDE_IO(qd_tcp_connection_t *conn, qd_mess
     //
     while (!!conn->outbound_body && pn_raw_connection_write_buffers_capacity(conn->raw_conn) > 0) {
         if (conn->listener_side && !!conn->observer_handle) {
-            qdpo_data(conn->observer_handle, false, conn->outbound_body, offset);
+            //qdpo_data(conn->observer_handle, false, conn->outbound_body, offset);
         }
         pn_raw_buffer_t raw_buffer;
         raw_buffer.context  = 0;
@@ -1412,7 +1411,7 @@ static int64_t tls_consume_data_buffers(void *context, qd_buffer_list_t *buffers
         while (buf) {
             octets += qd_buffer_size(buf);
             if (observe) {
-                qdpo_data(conn->observer_handle, false, buf, 0);
+                //qdpo_data(conn->observer_handle, false, buf, 0);
             }
             buf = DEQ_NEXT(buf);
         }
@@ -1955,11 +1954,15 @@ static void on_accept(qd_adaptor_listener_t *listener, pn_listener_t *pn_listene
 {
     qd_tcp_listener_t *li      = (qd_tcp_listener_t*) context;
     qd_tcp_connection_t *conn  = new_qd_tcp_connection_t();
-
     ZERO(conn);
+
     conn->conn_id  = qd_server_allocate_connection_id(tcp_context->server);
     conn->common.context_type = TL_CONNECTION;
     conn->common.parent       = (qd_tcp_common_t*) li;
+
+    conn->protocol_observer = li->protocol_observer;
+    conn->protocol_observer->connection_init(conn);
+
 
     sys_mutex_init(&conn->activation_lock);
     sys_atomic_init(&conn->core_activation, 0);
@@ -1978,6 +1981,7 @@ static void on_accept(qd_adaptor_listener_t *listener, pn_listener_t *pn_listene
     DEQ_INSERT_TAIL(li->connections, conn);
     li->connections_opened++;
     vflow_set_uint64(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L4, li->connections_opened);
+    vflow_set_uint64(li->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L7, li->num_requests);
     sys_mutex_unlock(&li->lock);
 
     conn->raw_conn = pn_raw_connection();
@@ -2243,6 +2247,7 @@ QD_EXPORT void *qd_dispatch_configure_tcp_listener(qd_dispatch_t *qd, qd_entity_
     SET_THREAD_UNKNOWN;
     qd_tcp_listener_t *li = new_qd_tcp_listener_t();
     ZERO(li);
+    li->protocol_observer = protocol_observer("http2", (void *)li);
 
     li->adaptor_config = new_qd_adaptor_config_t();
     ZERO(li->adaptor_config);

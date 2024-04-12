@@ -18,6 +18,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <nghttp2/nghttp2.h>
 
 #include "dispatch_private.h"
 #include "delivery.h"
@@ -68,6 +69,7 @@ struct qd_tcp_listener_t {
     uint64_t                   connections_opened;
     uint64_t                   connections_closed;
     bool                       closing;
+    uint64_t                   num_requests;
 };
 
 
@@ -149,6 +151,8 @@ typedef struct qd_tcp_connection_t {
     qd_handler_context_t        context;
     qd_tcp_connection_state_t  state;
     qdpo_transport_handle_t    *observer_handle;
+    qdpo_t                    *protocol_observer;
+    nghttp2_session            *server_session;
     struct {
         uint64_t                last_update;  // ingress: last byte count value received in PN_RECEIVED
         uint64_t                pending_ack;  // egress: bytes sent since last PN_RECEIVED generated
