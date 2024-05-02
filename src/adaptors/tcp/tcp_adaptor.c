@@ -757,8 +757,17 @@ static uint64_t produce_read_buffers_XSIDE_IO(qd_tcp_connection_t *conn, qd_mess
                 octet_count += raw_buffers[i].size;
                 if (qd_buffer_size(buf) > 0) {
                     DEQ_INSERT_TAIL(qd_buffers, buf);
-                    if (conn->listener_side && !!conn->observer_handle) {
-                        qdpo_data(conn->observer_handle, true, buf, 0);
+                    if (conn->listener_side) {
+                        if (conn->observer_handle) {
+                            qdpo_data(conn->observer_handle, true, buf, qd_buffer_size(buf));
+                        }
+                        else {
+                            qd_tcp_listener_t *li = (qd_tcp_listener_t*) conn->common.parent;
+                            conn->observer_handle = qdpo_first(li->protocol_observer, conn->common.vflow, conn, buf, 0);
+                            if (!conn->observer_handle) {
+                                //Log the error, there was a problem with processing the data by the observer, close the connection.
+                            }
+                        }
                     }
                 } else {
                     qd_buffer_free(buf);
@@ -796,8 +805,10 @@ static uint64_t consume_write_buffers_XSIDE_IO(qd_tcp_connection_t *conn, qd_mes
             pn_raw_buffer_t raw_buffers[actual];
             qd_buffer_t *buf = DEQ_HEAD(buffers);
             for (size_t i = 0; i < actual; i++) {
+
+                // hahaha
                 if (conn->listener_side && !!conn->observer_handle) {
-                    qdpo_data(conn->observer_handle, false, buf, 0);
+                    qdpo_data(conn->observer_handle, false, buf, qd_buffer_size(buf));
                 }
                 raw_buffers[i].context  = (uintptr_t) buf;
                 raw_buffers[i].bytes    = (char*) qd_buffer_base(buf);
@@ -823,7 +834,7 @@ static uint64_t copy_message_body_TLS_XSIDE_IO(qd_tcp_connection_t *conn, qd_mes
 {
     size_t   offset = 0;
     uint64_t octets = 0;
-    const bool observe = (conn->listener_side && !!conn->observer_handle);
+    //const bool observe = (conn->listener_side && !!conn->observer_handle);
 
     assert(conn->tls);
 
@@ -838,9 +849,9 @@ static uint64_t copy_message_body_TLS_XSIDE_IO(qd_tcp_connection_t *conn, qd_mes
             qd_buffer_t *clone = qd_buffer();
             clone->size = size;
             memcpy(qd_buffer_base(clone), qd_buffer_base(conn->outbound_body) + offset, size);
-            if (observe) {
-                qdpo_data(conn->observer_handle, false, clone, 0);
-            }
+            //if (observe) {
+            //    qdpo_data(conn->observer_handle, false, clone, 0);
+            //}
             DEQ_INSERT_TAIL(*buffers, clone);
         }
         octets += size;
@@ -880,9 +891,9 @@ static uint64_t consume_message_body_XSIDE_IO(qd_tcp_connection_t *conn, qd_mess
     //       every subsequent buffer will have an offset of 0.
     //
     while (!!conn->outbound_body && pn_raw_connection_write_buffers_capacity(conn->raw_conn) > 0) {
-        if (conn->listener_side && !!conn->observer_handle) {
-            qdpo_data(conn->observer_handle, false, conn->outbound_body, offset);
-        }
+        //if (conn->listener_side && !!conn->observer_handle) {
+        //    qdpo_data(conn->observer_handle, false, conn->outbound_body, offset);
+        //}
         pn_raw_buffer_t raw_buffer;
         raw_buffer.context  = 0;
         raw_buffer.bytes    = (char*) qd_buffer_base(conn->outbound_body);
@@ -2025,6 +2036,9 @@ static void on_accept(qd_adaptor_listener_t *adaptor_listener, pn_listener_t *pn
     vflow_set_uint64(conn->common.vflow, VFLOW_ATTRIBUTE_OCTETS, 0);
     vflow_add_rate(conn->common.vflow, VFLOW_ATTRIBUTE_OCTETS, VFLOW_ATTRIBUTE_OCTET_RATE);
     vflow_set_uint64(conn->common.vflow, VFLOW_ATTRIBUTE_WINDOW_SIZE, TCP_MAX_CAPACITY_BYTES);
+
+    vflow_set_uint64(conn->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L7,    0);
+    vflow_add_rate(conn->common.vflow, VFLOW_ATTRIBUTE_FLOW_COUNT_L7, VFLOW_ATTRIBUTE_FLOW_RATE_L7);
 
     conn->context.context = conn;
     conn->context.handler = on_connection_event_LSIDE_IO;

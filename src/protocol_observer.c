@@ -82,22 +82,8 @@ void qdpo_free(qdpo_t *observer)
     free_qdpo_t(observer);
 }
 
-
-qdpo_transport_handle_t qdpo_first(qdpo_t *observer, vflow_record_t *vflow, void *transport_context, qd_buffer_t *buf, size_t offset)
-{
-    // TODO
-    return 0;
-}
-
-
-void qdpo_data(qdpo_transport_handle_t transport_handle, bool from_client, qd_buffer_t *buf, size_t offset)
-{
-    // TODO
-}
-
-
-void qdpo_end(qdpo_transport_handle_t transport_handle)
-{
-    // TODO
-}
+//void qdpo_end(qdpo_transport_handle_t transport_handle)
+//{
+//    // TODO
+//}
 

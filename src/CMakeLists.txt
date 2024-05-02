@@ -50,6 +50,7 @@ set(qpid_dispatch_SOURCES
   adaptors/http2/http2_adaptor.c
   adaptors/adaptor_common.c
   adaptors/tcp/tcp_adaptor.c
+  adaptors/tcp/observers/http2_protocol_observer.c
   adaptors/test_adaptor.c
   adaptors/adaptor_listener.c
   adaptors/amqp/amqp_adaptor.c
