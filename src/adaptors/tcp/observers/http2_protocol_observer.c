@@ -262,7 +262,7 @@ qdpo_transport_handle_t qdpo_first(qdpo_t *observer, vflow_record_t *vflow, void
     int rv = nghttp2_session_mem_recv(http2_observer->server_session, qd_buffer_base(buf), qd_buffer_size(buf));
 
     if (rv < 0) {
-        //Log the error, there was a problem with processing the http2 data, the connection needs to be closed.
+        //TODO: Log the error, there was a problem with processing the http2 data, the connection needs to be closed.
         return 0;
     }
 
@@ -270,7 +270,6 @@ qdpo_transport_handle_t qdpo_first(qdpo_t *observer, vflow_record_t *vflow, void
     nghttp2_option_new(&option);
     nghttp2_option_set_no_recv_client_magic(option, 1);
     nghttp2_option_set_no_http_messaging(option, 1);
-    //nghttp2_option_set_peer_max_concurrent_streams(option, 100);
     rv = nghttp2_session_server_new2(&http2_observer->client_session, http2_observer->callbacks, (void *)http2_observer, option);
 
     if (rv != 0) {
