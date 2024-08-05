@@ -244,7 +244,7 @@ class MobileAddressTest(MessagingHandler):
         self.receiver      = None
         self.sender        = None
 
-        self.logger        = Logger()
+        self.logger        = Logger(print_to_console=True)
 
         self.normal_count  = 300
         self.extra_count   = 50
@@ -308,6 +308,8 @@ class MobileAddressTest(MessagingHandler):
         self.logger.log("on_settled")
         rdisp = str(event.delivery.remote_state)
         ldisp = str(event.delivery.local_state)
+        self.logger.log(f"event.delivery.remote_state={rdisp}")
+        self.logger.log(f"event.delivery.local_state={ldisp}")
         if event.sender == self.sender:
             if rdisp is None:
                 self.logger.log("on_settled: WARNING: sender remote delivery state is None. Local state = %s." % ldisp)
