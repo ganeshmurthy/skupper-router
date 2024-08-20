@@ -32,13 +32,12 @@ on:
       protonBranch:
         description: Branch in the protonRepository to check out (in addition to hardcoded branches)
         type: string
-        default: main
         required: false
 
 # known limitation https://github.com/actions/runner/issues/480
 env:
   protonRepository: "${{ github.event.inputs.protonRepository || 'apache/qpid-proton' }}"
-  protonBranch: "${{ github.event.inputs.protonBranch || 'main' }}"
+  protonBranch: '0.39.0'
 
 jobs:
 
@@ -56,7 +55,6 @@ jobs:
         buildType: [Debug, RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
-          - ${{ github.event.inputs.protonBranch || 'main' }}
           - 0.39.0
         exclude:
           - buildType: Debug
@@ -228,7 +226,6 @@ jobs:
         buildType: [Debug, RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
-          - ${{ github.event.inputs.protonBranch || 'main' }}
           - 0.39.0
         shard: [1, 2]
         shards: [2]
@@ -296,7 +293,7 @@ jobs:
           sudo sysctl -w kernel.core_pattern="coredump.%e.%p"
           ulimit -c unlimited
           sudo sysctl -w vm.mmap_rnd_bits=28
-          ctest --timeout 1200 -V --output-junit=Testing/Test.xml --no-compress-output -I ${{matrix.shard}},,${{matrix.shards}} -j12 ${{env.RouterCTestExtraArgs}}
+          ctest --timeout 1200 -V --output-junit Testing/Test.xml --no-compress-output -I ${{matrix.shard}},,${{matrix.shards}} -j12 ${{env.RouterCTestExtraArgs}}
 
       - name: Report coredump stacktraces (if any tests failed)
         if: ${{ failure() }}
@@ -337,7 +334,7 @@ jobs:
 ####################
 
   compile_and_test_pi5:
-    name: "Compile and Test on Pi 5 (aarch64 on Pi 5 proton main)"
+    name: "Compile and Test on Pi 5 (aarch64 on Pi 5 proton 0.39.0)"
     runs-on: self-hosted-arm64
     env:
       CC: 'gcc-12'
@@ -348,7 +345,7 @@ jobs:
       InstallPrefix: ${{github.workspace}}/install
       VERBOSE: 1
       protonRepository: "${{ github.event.inputs.protonRepository || 'apache/qpid-proton' }}"
-      protonBranch: "${{ github.event.inputs.protonBranch || 'main' }}"
+      protonBranch: "0.39.0"
       ProtonCMakeExtraArgs: >
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -370,11 +367,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: ${{ env.protonRepository }}
-          ref: main
+          ref: 0.39.0
           path: 'qpid-proton'
       - uses: actions/checkout@v4
         with:
           path: 'skupper-router'
+
+      - name: Run a patch command to patch qpid-proton
+        if: ${{ matrix.protonGitRef == '0.39.0'}}
+        run: cp ${{github.workspace}}/skupper-router/patches/proton/PROTON-2764-2763-2748.patch ${{github.workspace}}/qpid-proton; cd ${{github.workspace}}/qpid-proton; git apply --ignore-space-change --ignore-whitespace PROTON-2764-2763-2748.patch; cd ${{github.workspace}}
+
       - name: Install Linux build dependencies
         run: |
           sudo apt update; sudo apt install -y flake8 mypy pylint python3-qpid-proton libpython3-dev ninja-build ccache libwebsockets-dev libnghttp2-dev nginx python3-cffi python3-pip python3-setuptools python3-wheel
@@ -391,9 +393,9 @@ jobs:
           cache-name: cache-ccache
         with:
           path: .ccache
-          key: ${{ github.workflow }}-main-${{ env.cache-name }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+          key: ${{ github.workflow }}-0.39.0-${{ env.cache-name }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
           restore-keys: |
-            ${{ github.workflow }}-main-${{ env.cache-name }}
+            ${{ github.workflow }}-0.39.0-${{ env.cache-name }}
 
       - name: Create Build and Install directories
         run: mkdir -p "${ProtonBuildDir}" "${RouterBuildDir}" "{InstallPrefix}"
@@ -442,7 +444,7 @@ jobs:
         run: |
           ulimit -c unlimited
           threads=4
-          ctest --timeout 1200 -V --output-junit=Testing/Test.xml --output-on-failure --no-compress-output -j${threads}
+          ctest --timeout 1200 -V --output-junit Testing/Test.xml --output-on-failure --no-compress-output -j${threads}
 
       - name: Report coredump stacktraces (if any tests failed)
         if: ${{ failure() }}
@@ -501,12 +503,11 @@ jobs:
         buildType: [RelWithDebInfo, Debug]
         runtimeCheck: [OFF]
         protonGitRef:
-          - ${{ github.event.inputs.protonBranch || 'main' }}
           - 0.39.0
         shard: [ 1, 2 ]
         shards: [ 2 ]
         include:
-          # CentOS 9: Coverage Proton-main 1 of 2
+          # CentOS 9: Coverage Proton-0.39.0 1 of 2
           - os: ubuntu-22.04
             container: 'centos'
             containerTag: stream9
@@ -516,10 +517,10 @@ jobs:
             buildType: Coverage
             covType: system
             runtimeCheck: OFF
-            protonGitRef: ${{ github.event.inputs.protonBranch || 'main' }}
+            protonGitRef: '0.39.0'
             shard: 1
             shards: 2
-          # CentOS 9: Coverage Proton-main 2 of 2
+          # CentOS 9: Coverage Proton-0.39.0 2 of 2
           - os: ubuntu-22.04
             container: 'centos'
             containerTag: stream9
@@ -529,31 +530,7 @@ jobs:
             buildType: Coverage
             covType: system
             runtimeCheck: OFF
-            protonGitRef: ${{ github.event.inputs.protonBranch || 'main' }}
-            shard: 2
-            shards: 2
-          # CentOS 8: Release Proton-main 1 of 2
-          - os: ubuntu-22.04
-            container: 'centos'
-            containerTag: stream8
-            cc: gcc
-            cxx: g++
-            python: python3
-            buildType: RelWithDebInfo
-            runtimeCheck: OFF
-            protonGitRef: ${{ github.event.inputs.protonBranch || 'main' }}
-            shard: 1
-            shards: 2
-          # CentOS 8: Release Proton-main 2 of 2
-          - os: ubuntu-22.04
-            container: 'centos'
-            containerTag: stream8
-            cc: gcc
-            cxx: g++
-            python: python3
-            buildType: RelWithDebInfo
-            runtimeCheck: OFF
-            protonGitRef: ${{ github.event.inputs.protonBranch || 'main' }}
+            protonGitRef: '0.39.0'
             shard: 2
             shards: 2
           # - os: ubuntu-22.04
@@ -832,7 +809,7 @@ jobs:
             threads=6
           fi
 
-          ctest --timeout 1200 -V --output-junit=Testing/Test.xml --output-on-failure --no-compress-output -I ${{matrix.shard}},,${{matrix.shards}} -j${threads} ${{env.RouterCTestExtraArgs}}
+          ctest --timeout 1200 -V --output-junit Testing/Test.xml --output-on-failure --no-compress-output -I ${{matrix.shard}},,${{matrix.shards}} -j${threads} ${{env.RouterCTestExtraArgs}}
 
       - name: Process C Coverage
         if: ${{ !cancelled() && matrix.buildType == 'Coverage' }}
@@ -986,7 +963,7 @@ jobs:
         containerTag: ['39']
         buildType: [RelWithDebInfo]
         protonGitRef:
-          - ${{ github.event.inputs.protonBranch || 'main' }}
+          - ${{ github.event.inputs.protonBranch || '0.39.0' }}
     container:
       image: 'quay.io/${{ matrix.container }}/${{ matrix.container }}:${{ matrix.containerTag }}'
       volumes:
