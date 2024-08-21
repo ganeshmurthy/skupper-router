@@ -37,7 +37,7 @@ on:
 # known limitation https://github.com/actions/runner/issues/480
 env:
   protonRepository: "${{ github.event.inputs.protonRepository || 'apache/qpid-proton' }}"
-  protonBranch: '0.39.0'
+  protonBranch: "${{ github.event.inputs.protonBranch || '0.39.0' }}"
 
 jobs:
 
@@ -51,11 +51,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         buildType: [Debug, RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
-          - 0.39.0
+          - ${{ github.event.inputs.protonBranch || '0.39.0' }}
         exclude:
           - buildType: Debug
             runtimeCheck: tsan
@@ -222,11 +222,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         buildType: [Debug, RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
-          - 0.39.0
+          - ${{ github.event.inputs.protonBranch || '0.39.0' }}
         shard: [1, 2]
         shards: [2]
         exclude:
@@ -276,7 +276,7 @@ jobs:
 
       - name: Install Linux runtime/test dependencies
         run: |
-          sudo apt update; sudo apt install -y libdw1 libsasl2-2 libsasl2-modules sasl2-bin libjsoncpp25 libwebsockets16 libbenchmark1 pixz curl ncat gdb elfutils findutils file python3-dbg
+           sudo apt update; sudo apt install -y libdw1 libsasl2-2 libsasl2-modules sasl2-bin libjsoncpp25 libwebsockets19t64 libbenchmark1.8.3 pixz curl ncat gdb elfutils findutils file python3-dbg
 
       - name: Unpack archive
         run: tar -I pixz -xf archive.tar.xz
@@ -345,7 +345,7 @@ jobs:
       InstallPrefix: ${{github.workspace}}/install
       VERBOSE: 1
       protonRepository: "${{ github.event.inputs.protonRepository || 'apache/qpid-proton' }}"
-      protonBranch: "0.39.0"
+      protonBranch: "${{ github.event.inputs.protonBranch || '0.39.0' }}"
       ProtonCMakeExtraArgs: >
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -501,13 +501,18 @@ jobs:
         cxx: [g++]
         python: [python3.11]
         buildType: [RelWithDebInfo, Debug]
-        runtimeCheck: [OFF]
+        runtimeCheck: [asan, tsan]
         protonGitRef:
-          - 0.39.0
+          - ${{ github.event.inputs.protonBranch || '0.39.0' }}
         shard: [ 1, 2 ]
         shards: [ 2 ]
+        exclude:
+          - buildType: Debug
+            runtimeCheck: tsan
+          - buildType: RelWithDebInfo
+            runtimeCheck: asan
         include:
-          # CentOS 9: Coverage Proton-0.39.0 1 of 2
+          # CentOS 9: Coverage Proton-main 1 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -516,11 +521,11 @@ jobs:
             python: python3
             buildType: Coverage
             covType: system
+            protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
             runtimeCheck: OFF
-            protonGitRef: '0.39.0'
             shard: 1
             shards: 2
-          # CentOS 9: Coverage Proton-0.39.0 2 of 2
+          # CentOS 9: Coverage Proton-main 2 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -530,7 +535,31 @@ jobs:
             buildType: Coverage
             covType: system
             runtimeCheck: OFF
-            protonGitRef: '0.39.0'
+            protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
+            shard: 2
+            shards: 2
+          # CentOS 9: Release Proton-main 1 of 2
+          - os: ubuntu-latest
+            container: 'centos'
+            containerTag: stream9
+            cc: gcc
+            cxx: g++
+            python: python3
+            buildType: RelWithDebInfo
+            runtimeCheck: OFF
+            protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
+            shard: 1
+            shards: 2
+          # CentOS 9: Release Proton-main 2 of 2
+          - os: ubuntu-latest
+            container: 'centos'
+            containerTag: stream9
+            cc: gcc
+            cxx: g++
+            python: python3
+            buildType: RelWithDebInfo
+            runtimeCheck: OFF
+            protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
             shard: 2
             shards: 2
           # - os: ubuntu-latest
@@ -664,12 +693,6 @@ jobs:
         with:
           path: 'skupper-router'
 
-      - name: Enable additional package repositories for CentOS 8
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: |
-          dnf -y install epel-release 'dnf-command(config-manager)'
-          dnf config-manager --set-enabled powertools
-
       - name: Enable additional package repositories for CentOS 9
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: |
@@ -696,10 +719,6 @@ jobs:
         run: |
           dnf install -y ${PYTHON} ${PYTHON}-devel python3-pip
           ${PYTHON} -m ensurepip
-
-      - name: Install Linux build dependencies (CentOS 8)
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: dnf install -y python39-devel python39-pip
 
       # util-linux-core provides dmesg
       - name: Install Linux build dependencies (CentOS 9)
@@ -1042,13 +1061,6 @@ jobs:
       DNF: ${{github.workspace}}/build
 
     steps:
-
-      - name: Enable additional package repositories for CentOS 8
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: |
-          dnf -y install epel-release 'dnf-command(config-manager)'
-          dnf config-manager --set-enabled powertools
-
       - name: Enable additional package repositories for CentOS 9
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: |
