@@ -664,12 +664,6 @@ jobs:
         with:
           path: 'skupper-router'
 
-      - name: Enable additional package repositories for CentOS 8
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: |
-          dnf -y install epel-release 'dnf-command(config-manager)'
-          dnf config-manager --set-enabled powertools
-
       - name: Enable additional package repositories for CentOS 9
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: |
@@ -696,10 +690,6 @@ jobs:
         run: |
           dnf install -y ${PYTHON} ${PYTHON}-devel python3-pip
           ${PYTHON} -m ensurepip
-
-      - name: Install Linux build dependencies (CentOS 8)
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: dnf install -y python39-devel python39-pip
 
       # util-linux-core provides dmesg
       - name: Install Linux build dependencies (CentOS 9)
@@ -1042,13 +1032,6 @@ jobs:
       DNF: ${{github.workspace}}/build
 
     steps:
-
-      - name: Enable additional package repositories for CentOS 8
-        if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream8' }}
-        run: |
-          dnf -y install epel-release 'dnf-command(config-manager)'
-          dnf config-manager --set-enabled powertools
-
       - name: Enable additional package repositories for CentOS 9
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: |
