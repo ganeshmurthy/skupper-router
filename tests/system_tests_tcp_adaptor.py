@@ -1307,7 +1307,7 @@ class CommonTcpTests:
     def test_70_half_closed_INTA_INTA(self):
         name = "test_70_half_closed_INTA_INTA"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test70'
         out, _ = self._ncat_runner(name, "INTA", "INTA", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1316,7 +1316,7 @@ class CommonTcpTests:
     def test_71_half_closed_INTA_INTB(self):
         name = "test_71_half_closed_INTA_INTB"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test71'
         out, _ = self._ncat_runner(name, "INTA", "INTB", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1325,7 +1325,7 @@ class CommonTcpTests:
     def test_72_half_closed_INTA_INTC(self):
         name = "test_72_half_closed_INTA_INTC"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test72'
         out, _ = self._ncat_runner(name, "INTA", "INTC", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1334,7 +1334,7 @@ class CommonTcpTests:
     def test_73_half_closed_EA1_EA1(self):
         name = "test_73_half_closed_EA1_EA1"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test73'
         out, _ = self._ncat_runner(name, "EA1", "EA1", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1343,7 +1343,7 @@ class CommonTcpTests:
     def test_74_half_closed_EA1_EB1(self):
         name = "test_74_half_closed_EA1_EB1"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test74'
         out, _ = self._ncat_runner(name, "EA1", "EB1", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1352,7 +1352,7 @@ class CommonTcpTests:
     def test_75_half_closed_EA1_EC2(self):
         name = "test_75_half_closed_EA1_EC2"
         self.logger.log("TCP_TEST Start %s" % name)
-        data = b'abcd'
+        data = b'test75'
         out, _ = self._ncat_runner(name, "EA1", "EC2", data)
         self.assertEqual(data, out, f"ncat command returned invalid data, expected {data} but got {out}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1361,7 +1361,7 @@ class CommonTcpTests:
     def test_76_half_closed_EA1_EC2_large_message(self):
         name = "test_76_half_closed_EA1_EC2_large_message"
         self.logger.log("TCP_TEST Start %s" % name)
-        large_msg = b'G' * 40000 + b'END OF TRANSMISSION'
+        large_msg = b'test76G' * 40000 + b'END OF TRANSMISSION'
         out, _ = self._ncat_runner(name, "EA1", "EC2", large_msg)
         self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
@@ -1370,7 +1370,7 @@ class CommonTcpTests:
     def test_77_half_closed_INTA_INTC_large_message(self):
         name = "test_77_half_closed_INTA_INTC_large_message"
         self.logger.log("TCP_TEST Start %s" % name)
-        large_msg = b'T' * 40000 + b'END OF TRANSMISSION'
+        large_msg = b'test77T' * 40000 + b'END OF TRANSMISSION'
         out, _ = self._ncat_runner(name, "INTA", "INTC", large_msg)
         self.assertEqual(large_msg, out, f"ncat command returned invalid data, expected {len(large_msg)} but got {len(out)}")
         self.logger.log("TCP_TEST Stop %s SUCCESS" % name)
