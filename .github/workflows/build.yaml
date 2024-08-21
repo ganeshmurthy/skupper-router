@@ -145,8 +145,9 @@ jobs:
           architecture: x64
           check-latest: true
 
-      - name: Install Python build dependencies
-        run: python -m pip install setuptools wheel cffi
+      - name: Install python package for proton 0.39.0
+        if: ${{ matrix.protonGitRef == '0.39.0' }}
+        run: python3 -m pip install setuptools wheel cffi
 
       - name: Install Linux build dependencies
         run: |
@@ -158,6 +159,10 @@ jobs:
       - name: Run a patch command to patch qpid-proton
         if: ${{ matrix.protonGitRef == '0.39.0'}}
         run: cp ${{github.workspace}}/skupper-router/patches/proton/PROTON-2764-2763-2748.patch ${{github.workspace}}/qpid-proton; cd ${{github.workspace}}/qpid-proton; git apply --ignore-space-change --ignore-whitespace PROTON-2764-2763-2748.patch; cd ${{github.workspace}}
+
+      - name: Install python package for proton 0.39.0
+        if: ${{ matrix.protonGitRef == '0.39.0' }}
+        run: python3 -m pip install setuptools wheel cffi
 
       - name: qpid-proton cmake configure
         working-directory: ${{env.ProtonBuildDir}}
@@ -180,6 +185,7 @@ jobs:
           cmake "${{github.workspace}}/skupper-router" \
             "-DCMAKE_INSTALL_PREFIX=${InstallPrefix}" \
             "-DCMAKE_BUILD_TYPE=${BuildType}" \
+            "-DPYTHON_TEST_COMMAND='-m;pytest;-vs;--timeout=400;--junit-prefix=pytest.\${py_test_module};--junit-xml=junitxmls/\${py_test_module}.xml;--pyargs;\${py_test_module}'" \
             "-DPYTHON_TEST_COMMAND='-m;pytest;-vs;--timeout=400;--junit-prefix=pytest.\${py_test_module};--junit-xml=junitxmls/\${py_test_module}.xml;--pyargs;\${py_test_module}'" \
             "-GNinja" \
             ${RouterCMakeExtraArgs}
@@ -276,7 +282,7 @@ jobs:
 
       - name: Install Linux runtime/test dependencies
         run: |
-           sudo apt update; sudo apt install -y libdw1 libsasl2-2 libsasl2-modules sasl2-bin libjsoncpp25 libwebsockets19t64 libbenchmark1.8.3 pixz curl ncat gdb elfutils findutils file python3-dbg
+          sudo apt update; sudo apt install -y libdw1 libsasl2-2 libsasl2-modules sasl2-bin libjsoncpp25 libwebsockets19t64 libbenchmark1.8.3 pixz curl ncat gdb elfutils findutils file python3-dbg
 
       - name: Unpack archive
         run: tar -I pixz -xf archive.tar.xz
@@ -373,13 +379,13 @@ jobs:
         with:
           path: 'skupper-router'
 
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt update; sudo apt install -y flake8 mypy pylint python3-qpid-proton libpython3-dev ninja-build ccache libwebsockets-dev libnghttp2-dev nginx python3-build python3-cffi python3-pip python3-setuptools python3-wheel tox git
+
       - name: Run a patch command to patch qpid-proton
         if: ${{ matrix.protonGitRef == '0.39.0'}}
         run: cp ${{github.workspace}}/skupper-router/patches/proton/PROTON-2764-2763-2748.patch ${{github.workspace}}/qpid-proton; cd ${{github.workspace}}/qpid-proton; git apply --ignore-space-change --ignore-whitespace PROTON-2764-2763-2748.patch; cd ${{github.workspace}}
-
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt update; sudo apt install -y flake8 mypy pylint python3-qpid-proton libpython3-dev ninja-build ccache libwebsockets-dev libnghttp2-dev nginx python3-cffi python3-pip python3-setuptools python3-wheel
       # https://cristianadam.eu/20200113/speeding-up-c-plus-plus-github-actions-using-ccache/
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#environment-files
       - name: Prepare ccache timestamp
@@ -489,7 +495,7 @@ jobs:
 ####################
 
   compile_and_test:
-    name: "Compile and Test (${{matrix.container}}:${{matrix.containerTag}}, ${{matrix.buildType}}, proton ${{matrix.protonGitRef}}, shard ${{matrix.shard}} of ${{matrix.shards}})"
+    name: "Compile and Test (${{matrix.container}}:${{matrix.containerTag}}, ${{matrix.buildType}}, ${{matrix.runtimeCheck}}, proton ${{matrix.protonGitRef}}, shard ${{matrix.shard}} of ${{matrix.shards}})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -512,7 +518,7 @@ jobs:
           - buildType: RelWithDebInfo
             runtimeCheck: asan
         include:
-          # CentOS 9: Coverage Proton-main 1 of 2
+          # CentOS 9: Coverage Proton-0.39.0 1 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -525,7 +531,7 @@ jobs:
             runtimeCheck: OFF
             shard: 1
             shards: 2
-          # CentOS 9: Coverage Proton-main 2 of 2
+          # CentOS 9: Coverage Proton-0.39.0 2 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -538,7 +544,7 @@ jobs:
             protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
             shard: 2
             shards: 2
-          # CentOS 9: Release Proton-main 1 of 2
+          # CentOS 9: Release Proton-0.39.0 1 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -550,7 +556,7 @@ jobs:
             protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
             shard: 1
             shards: 2
-          # CentOS 9: Release Proton-main 2 of 2
+          # CentOS 9: Release Proton-0.39.0 2 of 2
           - os: ubuntu-latest
             container: 'centos'
             containerTag: stream9
@@ -562,32 +568,10 @@ jobs:
             protonGitRef: ${{ github.event.inputs.protonBranch || '0.39.0' }}
             shard: 2
             shards: 2
-          # - os: ubuntu-latest
-          #   container: 'centos'
-          #   containerTag: stream8
-          #   cc: gcc
-          #   cxx: g++
-          #   python: python3
-          #   buildType: RelWithDebInfo
-          #   runtimeCheck: OFF
-          #   protonGitRef: 0.39.0
-          #   shard: 1
-          #   shards: 2
-          # - os: ubuntu-latest
-          #   container: 'centos'
-          #   containerTag: stream8
-          #   cc: gcc
-          #   cxx: g++
-          #   python: python3
-          #   buildType: RelWithDebInfo
-          #   runtimeCheck: OFF
-          #   protonGitRef: 0.39.0
-          #   shard: 2
-          #   shards: 2
           # # unittest coverage
           # - os: ubuntu-latest
           #   container: 'fedora'
-          #   containerTag: 39
+          #   containerTag: 40
           #   cc: gcc
           #   cxx: g++
           #   python: python3.12
@@ -601,7 +585,7 @@ jobs:
           # # clang
           #- os: ubuntu-latest
           #  container: 'fedora'
-          #  containerTag: 39
+          #  containerTag: 40
           #  cc: clang
           #  cxx: clang++
           #  python: python3.11
@@ -612,7 +596,7 @@ jobs:
           #  shards: 2
           #- os: ubuntu-latest
           #  container: 'fedora'
-          #  containerTag: 39
+          #  containerTag: 40
           #  cc: clang
           #  cxx: clang++
           #  python: python3.11
@@ -689,6 +673,7 @@ jobs:
           repository: ${{ env.protonRepository }}
           ref: ${{ matrix.protonGitRef }}
           path: 'qpid-proton'
+
       - uses: actions/checkout@v4
         with:
           path: 'skupper-router'
@@ -725,7 +710,15 @@ jobs:
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: dnf install -y util-linux-core python3-devel python3-pip
 
-      - name: Install Python build dependencies
+      - name: Upgrade pip
+        run: ${PYTHON} -m pip install --upgrade pip
+
+      - name: Install python package for qpid-proton
+        if: ${{ matrix.protonGitRef == 'main' }}
+        run: ${PYTHON} -m pip install --upgrade -r ${{github.workspace}}/qpid-proton/python/ci_requirements.txt
+
+      - name: Install python package for 0.39.0 qpid-proton
+        if: ${{ matrix.protonGitRef == '0.39.0' }}
         run: ${PYTHON} -m pip install setuptools wheel cffi
 
       - name: Run a patch command to patch qpid-proton
@@ -822,7 +815,7 @@ jobs:
         run: |
           echo "coredump.%e.%p" > /proc/sys/kernel/core_pattern
           ulimit -c unlimited
-          
+
           threads=12
           if [[ "${{ matrix.runtimeCheck }}" == "tsan" ]]; then
             threads=6
@@ -1005,7 +998,27 @@ jobs:
         run: |
           podman build --build-arg PLATFORM=amd64 -t ${{ env.ImageName }} -f ./Containerfile .
 
+      # When rustup is updated, it tries to replace its binary, which on Windows is somehow locked.
+      # This can result in a CI failure, see: https://github.com/rust-lang/rustup/issues/3029
+#      - name: Install rust with rustup
+#        run: |
+#          rustup set auto-self-update disable
+#          rustup toolchain install stable --profile minimal
+#
+#      - uses: Swatinem/rust-cache@v2
+#
+#      - name: Compile and run .rs tests
+#        run: |
+#          cargo check
+#          cargo test -- --test-threads=1 --nocapture
+#        env:
+#          QDROUTERD_IMAGE: ${{ env.ImageName }}
+#          CARGO_INCREMENTAL: 0
+#          RUST_LOG: info
+#          RUST_BACKTRACE: 1
+
       # Trivy and Grype are the scanners that GitLab integrates with (at the time of writing)
+
       - name: Run Trivy security scan on the image
         if: ${{ ! cancelled() }}
         # https://aquasecurity.github.io/trivy/v0.43/getting-started/installation/#use-container-image
@@ -1061,6 +1074,7 @@ jobs:
       DNF: ${{github.workspace}}/build
 
     steps:
+
       - name: Enable additional package repositories for CentOS 9
         if: ${{ matrix.container == 'centos' && matrix.containerTag == 'stream9' }}
         run: |
