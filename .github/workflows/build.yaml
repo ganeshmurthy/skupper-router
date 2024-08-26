@@ -232,7 +232,7 @@ jobs:
         buildType: [Debug, RelWithDebInfo]
         runtimeCheck: [asan, tsan]
         protonGitRef:
-          - ${{ github.event.inputs.protonBranch || 'main' }}
+          - main
         shard: [1, 2]
         shards: [2]
         exclude:
