@@ -68,7 +68,7 @@ RUN microdnf -y --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install \
  && microdnf clean all
 
 # Remove gnutls and everything that depends on it. See https://github.com/skupperproject/skupper-router/issues/1477
-RUN microdnf -y remove gnutls glib2 gobject-introspection libpeas microdnf gnupg2 gpgme libdnf json-glib libmodulemd librepo librhsm
+RUN microdnf -y remove gnutls glib2 gobject-introspection libpeas microdnf gnupg2 gpgme libdnf json-glib libmodulemd librepo librhsm librhsm libsolv rpm-libs rpm curl-minimal libcurl-minimal
 
 RUN useradd --uid 10000 runner
 USER 10000
