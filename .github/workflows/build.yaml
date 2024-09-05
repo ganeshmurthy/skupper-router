@@ -1045,7 +1045,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Containerfile
         run: |
-          podman build --build-arg PLATFORM=arm64 -t ${{ env.ImageName }} -f ./Containerfile .
+          podman --cgroup-manager cgroupfs build --build-arg PLATFORM=arm64 -t ${{ env.ImageName }} -f ./Containerfile .
 
   rpm:
     name: 'Build and test RPM (${{ matrix.container }}:${{ matrix.containerTag }})'
