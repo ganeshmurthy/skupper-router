@@ -59,6 +59,13 @@ struct qd_http2_decoder_callbacks_t {
     // from_client is true if the header was read from the stream sent by the client, false if the stream is sent from the server.
     // The callback must copy the data associated with these values if they need to be saved.
     //
+    int (*on_data)(qd_http2_decoder_connection_t *conn_state,
+                   uintptr_t request_context,
+                   bool from_client,
+                   uint32_t stream_id,
+                   bool end_stream,
+                   uint32_t num_bytes);
+
     int (*on_header)(qd_http2_decoder_connection_t *conn_state,
                      uintptr_t request_context,
                      bool from_client,
@@ -74,6 +81,14 @@ struct qd_http2_decoder_callbacks_t {
                            uintptr_t request_context,
                            bool from_client,
                            uint32_t stream_id);
+
+    // Invoked when the decoder has decoded all request headers.
+    // It looks up the stream id on the header frame and passes it to the callback.
+    int (*on_end_headers)(qd_http2_decoder_connection_t *conn_state,
+                          uintptr_t request_context,
+                          bool from_client,
+                          uint32_t stream_id,
+                          bool end_stream);
 
     //
     // Callback called when the http2 decoder runs into a decoding error.
