@@ -391,7 +391,7 @@ static bool parse_data_frame(qd_http2_decoder_t *decoder, const uint8_t **data, 
     }
 
     if (*length < HTTP2_FRAME_FLAGS_STREAM_ID_LENGTH) {
-        qd_log(LOG_HTTP2_DECODER, QD_LOG_DEBUG, "[C%"PRIu64"] parse_frame_header - *length(%zu) < HTTP2_FRAME_LENGTH_AND_TYPE_BYTES, moving %zu bytes to scratch buffer", decoder->conn_state->conn_id, *length, *length);
+        qd_log(LOG_HTTP2_DECODER, QD_LOG_DEBUG, "[C%"PRIu64"] parse_frame_header - *length(%zu) < HTTP2_FRAME_FLAGS_STREAM_ID_LENGTH, moving %zu bytes to scratch buffer", decoder->conn_state->conn_id, *length, *length);
         int allocated = move_to_scratch_buffer(&decoder->scratch_buffer, *data, *length);
         if (allocated == -1) {
             parser_error(decoder, "scratch buffer size exceeded 65535 bytes, stopping decoder");

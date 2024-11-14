@@ -155,6 +155,10 @@ int on_begin_header_callback(qd_http2_decoder_connection_t *conn_state,
     return 0;
 }
 
+/**
+ * This callback is called once on each HTTP2 DATA frame.
+ * num_bytes is the number of the bytes that the data frame contains.
+ */
 static int on_data_recv_callback(qd_http2_decoder_connection_t *conn_state,
                                  uintptr_t request_context,
                                  bool from_client,

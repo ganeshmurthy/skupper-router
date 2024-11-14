@@ -151,7 +151,6 @@ static int on_data_recv_callback(qd_http2_decoder_connection_t *conn_state,
                                  bool end_stream,
                                  uint32_t num_bytes)
 {
-    printf("stream_id=%i\n", (int)stream_id);
     data_called_back = true;
     return 0;
 }
