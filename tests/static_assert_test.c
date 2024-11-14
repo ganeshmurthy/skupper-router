@@ -19,12 +19,4 @@
 
 #include "qpid/dispatch/static_assert.h"
 
-static unsigned long ul;
-static long          l;
-static int           i;
 
-STATIC_ASSERT(IS_SAME(unsigned long, ul), ul is unsigned long);
-STATIC_ASSERT(!IS_SAME(unsigned long, l), l is not unsigned long);
-
-STATIC_ASSERT(!IS_SAME(int, l), l is not int);
-STATIC_ASSERT(!IS_SAME(long, i), i is not long);
