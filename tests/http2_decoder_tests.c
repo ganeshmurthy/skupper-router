@@ -162,7 +162,7 @@ qd_http2_decoder_callbacks_t callbacks = {
     //.protocol_error = protocol_error
 };
 
-char* test_data_frame(void *context)
+char* test_http2_decode_data_frame(void *context)
 {
     qd_http2_decoder_connection_t *conn_state = qd_http2_decoder_connection(&callbacks, 0, 1);
 
@@ -630,7 +630,7 @@ int http2_decoder_tests(void)
     TEST_CASE(test_http2_decode_response_header, 0);
     TEST_CASE(test_http2_decode_compressed_header_error, 0);
     TEST_CASE(test_http2_decode_request_header_fragmented, 0);
-    TEST_CASE(test_data_frame, 0);
+    TEST_CASE(test_http2_decode_data_frame, 0);
 
 
     return result;
