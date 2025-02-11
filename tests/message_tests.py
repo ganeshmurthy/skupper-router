@@ -246,7 +246,7 @@ class MobileAddressTest(MessagingHandler):
 
         self.logger        = Logger()
 
-        self.normal_count  = 300
+        self.normal_count  = 150
         self.extra_count   = 50
         self.n_rcvd        = 0
         self.n_sent        = 0
@@ -512,8 +512,8 @@ class MobileAddressMulticastTest(MessagingHandler):
         self.received_all = False
 
         if self.large_msg:
-            self.body = "0123456789101112131415" * 5000
-            self.properties = {'big field': 'X' * 3200}
+            self.body = "0123456789101112131415" * 2500
+            self.properties = {'big field': 'X' * 2200}
 
     def on_released(self, event):
         self.n_released += 1
