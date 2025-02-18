@@ -331,7 +331,6 @@ class Priority (MessagingHandler):
                 print("timeout 4")
                 self.send(send_qrys=True)
 
-
     def send_queries(self):
         # Query router A.
         if self.num_attempts_A < self.max_attempts:
@@ -348,7 +347,7 @@ class Priority (MessagingHandler):
             mgmt_sender.send(msg)
 
     def send(self, send_qrys=True) :
-        print (f"send_qrys={send_qrys} in send()")
+        print(f"send_qrys={send_qrys} in send()")
         # First send the payload messages.
         if self.n_sent < self.n_messages :
             for i in range(self.n_messages) :
@@ -358,7 +357,7 @@ class Priority (MessagingHandler):
                 self.n_sent += 1
                 print(f"self.n_sent={self.n_sent}")
         if send_qrys:
-            print ("call send_queries in send()")
+            print("call send_queries in send()")
             self.send_queries()
 
     # This test has two goals: get the response from router A
