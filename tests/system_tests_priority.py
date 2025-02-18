@@ -270,12 +270,6 @@ class Priority (MessagingHandler):
             'B' : dict()
         }
 
-        print(f"name={test_name}")
-        print(f"self.client_addrs={self.client_addrs}")
-        print(f"self.destination={self.dest}")
-        print(f"self.magic_message_priority={self.magic_msg_priority}")
-        print(f"self.magic_address_priority={self.magic_addr_priority}")
-
     # Shut down everything and exit.
     def bail(self, text):
         self.finishing = True
@@ -305,6 +299,8 @@ class Priority (MessagingHandler):
         self.routers['B']['mgmt_receiver'] = event.container.create_receiver(self.routers['B']['mgmt_conn'], dynamic=True)
         self.routers['B']['mgmt_sender']   = event.container.create_sender(self.routers['B']['mgmt_conn'], "$management")
 
+        # The initial setup is done, kick off the sender.
+        # This timer calls send on timeout and that kicks off the whole test.
         event.reactor.schedule(2, Timeout(self, "send"))
 
     def on_link_opened(self, event) :
@@ -320,15 +316,11 @@ class Priority (MessagingHandler):
             self.routers['B']['mgmt_helper'] = ManagementMessageHelper(event.receiver.remote_source.address)
 
     def timeout(self, name):
-        print("timeout 1")
         if name == 'send':
-            print("timeout 2")
             if self.n_sent == 0:
-                print("timeout 3")
                 self.send(send_qrys=False)
                 self.reactor.schedule(5, Timeout(self, "send"))
             else:
-                print("timeout 4")
                 self.send(send_qrys=True)
 
     def send_queries(self):
@@ -347,17 +339,14 @@ class Priority (MessagingHandler):
             mgmt_sender.send(msg)
 
     def send(self, send_qrys=True) :
-        print(f"send_qrys={send_qrys} in send()")
-        # First send the payload messages.
+        # First send all the payload messages.
         if self.n_sent < self.n_messages :
             for i in range(self.n_messages) :
                 msg = Message(body=self.n_sent)
                 msg.priority = 3
                 self.sender.send(msg)
                 self.n_sent += 1
-                print(f"self.n_sent={self.n_sent}")
         if send_qrys:
-            print("call send_queries in send()")
             self.send_queries()
 
     # This test has two goals: get the response from router A
@@ -374,7 +363,6 @@ class Priority (MessagingHandler):
             return
         msg = event.message
         if event.receiver == self.routers['A']['mgmt_receiver']:
-            print("if event.receiver == self.routers['A']['mgmt_receiver'] :")
             # Router A has only one set of outgoing links, and it
             # has set a priority for our target address. We should
             # see all the messages we sent go out with that priority.
@@ -399,14 +387,12 @@ class Priority (MessagingHandler):
                         else :
                             if self.num_attempts_A < self.max_attempts:
                                 self.num_attempts_A += 1
-                                print(f"self.num_attempts_A={self.num_attempts_A}")
                                 self.reactor.schedule(5, Timeout(self, "send"))
                             else:
                                 self.bail("Router A priority %d had %d messages instead of %d." %
                                           (magic, message_count, self.n_messages))
 
         elif event.receiver == self.routers['B']['mgmt_receiver'] :
-            print("elif event.receiver == self.routers['B']['mgmt_receiver'] :")
             # Router B has two sets of outgoing links, and it has not
             # set a priority for the target address. We should see all
             # of our messages going out over the message-intrinsic
@@ -430,15 +416,12 @@ class Priority (MessagingHandler):
                 else :
                     if self.num_attempts_B < self.max_attempts:
                         self.num_attempts_B += 1
-                        print(f"self.num_attempts_B={self.num_attempts_B}")
                         self.reactor.schedule(5, Timeout(self, "send"))
                     else:
                         self.bail("No outgoing link on router B had %d messages at priority 3" % self.n_messages)
 
         else :
             # This is a payload message -- not management. Just count it.
-            print("This is a payload message -- not management. Just count it.")
-            print("Received", msg)
             self.n_received += 1
 
     def run(self):
