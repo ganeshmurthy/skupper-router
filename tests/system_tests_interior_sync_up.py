@@ -144,17 +144,9 @@ class InteriorSyncUpTest(MessagingHandler):
         self.add_receivers()
 
     def add_receivers(self):
-        if len(self.receivers) < self.count:
-            print("add_receivers 1")
+        while len(self.receivers) < self.count:
+            print("add_receivers 4")
             self.receivers.append(self.container.create_receiver(self.conn_b, "address.%d" % len(self.receivers)))
-        if self.n_setup_delays < self.delay_count:
-            print("add_receivers 2")
-            self.delay_timer = self.reactor.schedule(2.0, DelayTimeout(self))
-        else:
-            print("add_receivers 3")
-            while len(self.receivers) < self.count:
-                print("add_receivers 4")
-                self.receivers.append(self.container.create_receiver(self.conn_b, "address.%d" % len(self.receivers)))
 
     def on_start(self, event):
         self.container      = event.container
