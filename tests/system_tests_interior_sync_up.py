@@ -62,8 +62,6 @@ class RouterTest(TestCase):
         cls.routers = []
 
         inter_router_port = cls.tester.get_port()
-        edge_port_A       = cls.tester.get_port()
-        edge_port_B       = cls.tester.get_port()
 
         router('INT.A', 'interior')
         router('INT.B', 'interior',
@@ -107,6 +105,16 @@ class InteriorSyncUpTest(MessagingHandler):
         self.error          = None
         self.last_action    = "test initialization"
         self.expect         = ""
+        self.container      = None
+        self.reactor        = None
+        self.conn_a         = None
+        self.conn_b         = None
+        self.probe_receiver = None
+        self.probe_reply    = None
+        self.probe_sender   = None
+        self.proxy          = None
+        self.max_attempts   = 3
+        self.num_attempts   = 0
 
     def fail(self, text):
         self.error = text
@@ -137,11 +145,15 @@ class InteriorSyncUpTest(MessagingHandler):
 
     def add_receivers(self):
         if len(self.receivers) < self.count:
+            print("add_receivers 1")
             self.receivers.append(self.container.create_receiver(self.conn_b, "address.%d" % len(self.receivers)))
         if self.n_setup_delays < self.delay_count:
+            print("add_receivers 2")
             self.delay_timer = self.reactor.schedule(2.0, DelayTimeout(self))
         else:
+            print("add_receivers 3")
             while len(self.receivers) < self.count:
+                print("add_receivers 4")
                 self.receivers.append(self.container.create_receiver(self.conn_b, "address.%d" % len(self.receivers)))
 
     def on_start(self, event):
@@ -183,25 +195,29 @@ class InteriorSyncUpTest(MessagingHandler):
 
             if self.expect == "not-found":
                 response = self.proxy.response(event.message)
+                failed = False
                 for addr in response.results:
                     if "address." in addr.name:
                         self.fail("Found address on host-a when we didn't expect it - %s" % addr.name)
+                        failed = True
+                        break
 
                 ##
                 # Hook up the two routers to start the sync-up
                 ##
-                self.probe_sender.send(self.proxy.create_connector("IR", port=self.inter_router_port, role="inter-router"))
-                self.expect      = "create-success"
-                self.last_action = "created inter-router connector"
+                if failed is False:
+                    self.probe_sender.send(self.proxy.create_connector("IR", port=self.inter_router_port, role="inter-router"))
+                    self.expect      = "create-success"
+                    self.last_action = "created inter-router connector"
 
             elif self.expect == "create-success":
                 ##
                 # Start polling for the addresses on host_a
                 ##
-                response  = self.proxy.response(event.message)
                 self.probe_sender.send(self.proxy.query_addresses())
                 self.expect      = "query-success"
                 self.last_action = "started probing host_a for addresses"
+                print(f"query-success")
 
             elif self.expect == "query-success":
                 response  = self.proxy.response(event.message)
@@ -212,10 +228,14 @@ class InteriorSyncUpTest(MessagingHandler):
 
                 self.last_action = "Got a query response with %d of the expected addresses" % (got_count)
 
+                print(f"got_count={got_count}, self.count={self.count}")
                 if got_count == self.count:
                     self.fail(None)
                 else:
-                    self.poll_timer = self.reactor.schedule(0.5, PollTimeout(self))
+                    print(f"self.num_attempts={self.num_attempts}, self.max_attempts={self.max_attempts}")
+                    if self.num_attempts < self.max_attempts:
+                        self.poll_timer = self.reactor.schedule(3, PollTimeout(self))
+                        self.num_attempts += 1
 
     def run(self):
         container = Container(self)
