@@ -209,7 +209,6 @@ class InteriorSyncUpTest(MessagingHandler):
                 self.probe_sender.send(self.proxy.query_addresses())
                 self.expect      = "query-success"
                 self.last_action = "started probing host_a for addresses"
-                print(f"query-success")
 
             elif self.expect == "query-success":
                 response  = self.proxy.response(event.message)
