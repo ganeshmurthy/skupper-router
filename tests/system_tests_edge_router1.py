@@ -1059,7 +1059,7 @@ class StreamingMessageTest(TestCase):
                "-d"]
         self._container_index += 1
         env = dict(os.environ, PN_TRACE_FRM="1")
-        return self.popen(cmd, expect=expect, env=env)
+        return self.popen(cmd, expect=expect, env=env, abort=True)
 
     def spawn_sender(self, router, count, address, expect=None, size=None):
         if expect is None:
@@ -1075,7 +1075,7 @@ class StreamingMessageTest(TestCase):
                "-d"]
         self._container_index += 1
         env = dict(os.environ, PN_TRACE_FRM="1")
-        return self.popen(cmd, expect=expect, env=env)
+        return self.popen(cmd, expect=expect, env=env, abort=True)
 
     def spawn_clogger(self, router, count, address,
                       size, pause_ms, expect=None):
@@ -1089,7 +1089,7 @@ class StreamingMessageTest(TestCase):
                "-D",
                "-P", str(pause_ms)]
         env = dict(os.environ, PN_TRACE_FRM="1")
-        return self.popen(cmd, expect=expect, env=env)
+        return self.popen(cmd, expect=expect, env=env, abort=True)
 
     def _streaming_test(self, address):
 
@@ -1326,7 +1326,6 @@ class StreamingMessageTest(TestCase):
         self.EB1.wait_address("balanced/test-address", subscribers=2)
 
         # this will block one of the above receivers with a streaming message
-
         clogger = self.spawn_clogger(self.EA1,
                                      count=0,
                                      address="balanced/test-address",
