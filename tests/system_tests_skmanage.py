@@ -548,7 +548,7 @@ class SkmanageTest(TestCase):
         c = BlockingConnection(self.address())
         self.logger = Logger(title="test_yy_query_many_links")
         count = 0
-        COUNT = 3369
+        COUNT = 3370
 
         ADDRESS_SENDER = "examples-sender"
         ADDRESS_RECEIVER = "examples-receiver"
