@@ -937,7 +937,7 @@ class TopologyDisposition (MessagingHandler):
         self.state_transition('on_start', 'starting')
         self.reactor = event.reactor
         self.test_timer = event.reactor.schedule(self.deadline, Timeout(self, "test"))
-        self.send_timer = event.reactor.schedule(self.send_interval, Timeout(self, "sender"))
+        self.send_timer = event.reactor.schedule(5, Timeout(self, "sender"))
         self.send_conn  = event.container.connect(self.client_addrs['A'])
         self.recv_conn  = event.container.connect(self.client_addrs['B'])
         self.sender     = event.container.create_sender(self.send_conn, self.dest)
