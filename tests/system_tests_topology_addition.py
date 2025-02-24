@@ -320,7 +320,7 @@ class TopologyAdditionTests (TestCase):
 # --------------------------------------------------------------
 
 class AddRouter (MessagingHandler):
-    def     __init__(self,
+    def __init__(self,
                  send_addr,
                  recv_addr,
                  destination,
@@ -328,8 +328,7 @@ class AddRouter (MessagingHandler):
                  new_router_name,
                  new_router_config,
                  expected_traces,
-                 released_ok
-                 ):
+                 released_ok):
         super(AddRouter, self).__init__(prefetch=100)
         self.send_addr         = send_addr
         self.recv_addr         = recv_addr
@@ -338,17 +337,14 @@ class AddRouter (MessagingHandler):
         self.new_router_name   = new_router_name
         self.new_router_config = new_router_config
         self.released_ok       = released_ok
-
         self.error         = None
         self.sender        = None
         self.receiver      = None
-
         self.n_messages    = 30
         self.n_sent        = 0
         self.n_received    = 0
         self.n_released    = 0
         self.n_accepted    = 0
-
         self.test_timer    = None
         self.send_timer    = None
         self.timeout_count = 0
