@@ -957,6 +957,7 @@ class TopologyDisposition (MessagingHandler):
         self.routers['B']['mgmt_sender']   = event.container.create_sender(self.routers['B']['mgmt_conn'], "$management")
         self.routers['C']['mgmt_sender']   = event.container.create_sender(self.routers['C']['mgmt_conn'], "$management")
         self.routers['D']['mgmt_sender']   = event.container.create_sender(self.routers['D']['mgmt_conn'], "$management")
+        self.debug_print("on_start completed - 5 second sender timer scheduled")
 
     # -----------------------------------------------------------------
     # At start-time, as the management links to the routers open,
@@ -1057,8 +1058,8 @@ class TopologyDisposition (MessagingHandler):
                 elif event.receiver == self.routers['D']['mgmt_receiver'] :
                     self.debug_print("received link check message from D ------------")
                 body = event.message.body
-                self.debug_print("body: %s" % body)
-                self.debug_print("properties: %s" % event.message.properties)
+                #self.debug_print("body: %s" % body)
+                #self.debug_print("properties: %s" % event.message.properties)
 
                 self.link_check_count -= 1
                 if self.link_check_count == 0 :
