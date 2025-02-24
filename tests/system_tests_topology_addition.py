@@ -320,7 +320,7 @@ class TopologyAdditionTests (TestCase):
 # --------------------------------------------------------------
 
 class AddRouter (MessagingHandler):
-    def __init__(self,
+    def     __init__(self,
                  send_addr,
                  recv_addr,
                  destination,
@@ -355,6 +355,8 @@ class AddRouter (MessagingHandler):
         self.reactor       = None
         self.container     = None
         self.finishing     = False
+        self.send_conn     = None
+        self.recv_conn     = None
 
         # The parent sends us a list of the traces we
         # ought to see on messages.
@@ -405,15 +407,15 @@ class AddRouter (MessagingHandler):
         self.reactor   = event.reactor
         self.container = event.container
 
-        self.test_timer  = self.reactor.schedule(TIMEOUT, Timeout(self, "test"))
-        self.send_timer  = self.reactor.schedule(1, Timeout(self, "send"))
-
         self.send_conn   = event.container.connect(self.send_addr)
         self.recv_conn   = event.container.connect(self.recv_addr)
 
         self.sender      = event.container.create_sender(self.send_conn, self.dest)
         self.receiver    = event.container.create_receiver(self.recv_conn, self.dest)
         self.receiver.flow(self.n_messages)
+
+        self.test_timer  = self.reactor.schedule(TIMEOUT, Timeout(self, "test"))
+        self.send_timer  = self.reactor.schedule(5, Timeout(self, "send"))
 
     # ------------------------------------------------------------
     # Sender Side
