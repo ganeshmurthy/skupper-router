@@ -201,6 +201,7 @@ class RouterTestHttp(TestCase):
             ('listener', {'port': metrics_ports[1], 'httpRootDir': os.path.dirname(__file__)}),
         ])
         r = self.qdrouterd('metrics-test-router', config)
+        r.wait_ready()
 
         # generate a list of all metric names expected to be provided via HTTP:
 
@@ -237,6 +238,7 @@ class RouterTestHttp(TestCase):
             # Verify that all metric names are valid prometheus names that
             # must match the regex [a-zA-Z_:][a-zA-Z0-9_:]*
             for metric in metrics:
+                print("metric=", metric)
                 # remove trailing counter
                 mname = metric.strip().split()[0]
                 match = re.fullmatch(r'([a-zA-Z_:])([a-zA-Z0-9_:])*', mname)

@@ -646,6 +646,8 @@ static size_t _write_conn_counter_metrics(uint8_t **start, size_t available)
         assert(proto_name);
         int ct = snprintf(name_buffer, sizeof(name_buffer), "qdr_%s_service_connections", proto_name);
         if (ct < 0 || ct >= sizeof(name_buffer)) {  // overrun!
+            printf("_write_conn_counter_metrics overrun! - you need to increase the output_buffer size, proto_name=%s\n", proto_name);
+            fflush(stdout);
             assert(false);  // you need to increase the output_buffer size!
             return 0;
         }
@@ -657,6 +659,8 @@ static size_t _write_conn_counter_metrics(uint8_t **start, size_t available)
             if (!isalnum(*ptr) && *ptr != '_' && *ptr != ':')
                 *ptr = '_';
         }
+
+        printf("_write_conn_counter_metrics name_buffer=%s\n", name_buffer);
 
         size_t rc = _write_metric(start, available, name_buffer, "gauge", qd_connection_count(proto));
         if (rc == 0) {
