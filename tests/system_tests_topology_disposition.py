@@ -815,14 +815,14 @@ class TopologyDisposition (MessagingHandler):
         self.timeout_count        = 0
         self.confirmed_kills      = 0
         self.send_interval        = 0.1
-        self.to_be_sent           = 700
+        self.to_be_sent           = 600
         self.deadline             = 100
         self.message_status       = dict()
         self.message_times        = dict()
         self.most_recent_kill     = 0
         self.first_trouble        = 0
         self.flow                 = 100
-        self.max_trouble_duration = 20
+        self.max_trouble_duration = 30
         self.link_check_count     = 0
         self.send_burst_size      = 10
         self.test_name            = test_name
@@ -1057,10 +1057,6 @@ class TopologyDisposition (MessagingHandler):
                     self.debug_print("received link check message from C ------------")
                 elif event.receiver == self.routers['D']['mgmt_receiver'] :
                     self.debug_print("received link check message from D ------------")
-                body = event.message.body
-                #self.debug_print("body: %s" % body)
-                #self.debug_print("properties: %s" % event.message.properties)
-
                 self.link_check_count -= 1
                 if self.link_check_count == 0 :
                     if self.state == 'link checking' :

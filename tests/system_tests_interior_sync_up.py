@@ -145,7 +145,6 @@ class InteriorSyncUpTest(MessagingHandler):
 
     def add_receivers(self):
         while len(self.receivers) < self.count:
-            print("add_receivers 4")
             self.receivers.append(self.container.create_receiver(self.conn_b, "address.%d" % len(self.receivers)))
 
     def on_start(self, event):
