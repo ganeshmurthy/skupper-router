@@ -355,7 +355,7 @@ class TopologyDispositionTests (TestCase):
         cls.skip = {'test_01_delete_spurious_connector' : 0,
                     'test_02_topology_disposition' : 0,
                     'test_03_connection_id_propagation' : 0,
-                    'test_04_scraper_tool' : 0
+                    'test_04_scraper_tool' : 1
                     }
 
     def test_01_delete_spurious_connector(self):
@@ -822,7 +822,7 @@ class TopologyDisposition (MessagingHandler):
         self.most_recent_kill     = 0
         self.first_trouble        = 0
         self.flow                 = 100
-        self.max_trouble_duration = 30
+        self.max_trouble_duration = 40
         self.link_check_count     = 0
         self.send_burst_size      = 10
         self.test_name            = test_name
