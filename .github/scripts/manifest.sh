@@ -21,7 +21,7 @@ set -exo pipefail
 CONTAINER=podman
 PROJECT_NAME=skupper-router
 CONTAINER_REGISTRY=quay.io
-CONTAINER_ORG=skupper
+CONTAINER_ORG=ganeshmurthy
 export BUILDAH_FORMAT=docker
 
 # We currently do two platforms
