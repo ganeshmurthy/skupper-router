@@ -37,29 +37,21 @@ fi
 
 # Pushing only when credentials available
 if [[ -n "${CONTAINER_USER}" && -n "${CONTAINER_PASSWORD}" ]]; then
-    ${CONTAINER} buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le --build-arg PLATFORM=$PLATFORM --build-arg VERSION=$VERSION -t ${PROJECT_NAME}:${PROJECT_TAG} -f ./Containerfile .
-
     # Login to the quay.io container repo.
     ${CONTAINER} login -u ${CONTAINER_USER} -p ${CONTAINER_PASSWORD} ${CONTAINER_REGISTRY}
-
-    ${CONTAINER} tag ${PROJECT_NAME}:${PROJECT_TAG} ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}
-    ${CONTAINER} push ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}
+    ${CONTAINER} buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le --build-arg PLATFORM=$PLATFORM --build-arg VERSION=$VERSION --push -t ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}   -f ./Containerfile .
 
     # Only publish build number tag if one provided
     if [[ -n "${BUILD_NUMBER}" ]]; then
-        ${CONTAINER} tag ${PROJECT_NAME}:${PROJECT_TAG} ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}-${BUILD_NUMBER}
-        ${CONTAINER} push ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}-${BUILD_NUMBER}
+        ${CONTAINER} buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le --build-arg PLATFORM=$PLATFORM --build-arg VERSION=$VERSION --push -t ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG}-${BUILD_NUMBER}   -f ./Containerfile .
     fi
 
-    # PUSH_LATEST environment variable is exported only in release.yml
-    # Only when an actual release tag (for e.g. 2.1.0) is pushed, we push the :latest.
     # :latest represents the latest released version of the software.
     # We do not push :latest when main or other non-release tags are pushed.
     if [ -z "$PUSH_LATEST" ]; then
          echo 'NOT Pushing :latest tag'
     else
         PROJECT_TAG_LATEST=latest
-        ${CONTAINER} tag ${PROJECT_NAME}:${PROJECT_TAG} ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG_LATEST}
-        ${CONTAINER} push ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG_LATEST}
+        ${CONTAINER} buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le --build-arg PLATFORM=$PLATFORM --build-arg VERSION=$VERSION --push -t ${CONTAINER_REGISTRY}/${CONTAINER_ORG}/${PROJECT_NAME}:${PROJECT_TAG_LATEST}   -f ./Containerfile .
     fi
 fi
