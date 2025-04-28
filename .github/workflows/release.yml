@@ -56,8 +56,7 @@ jobs:
           LATEST_RELEASE_TAG=`curl -s https://api.github.com/repos/skupperproject/skupper-router/releases/latest  | jq -r ".tag_name"`
           LATEST_VERSION=`(echo "${VERSION}" ; echo "${LATEST_RELEASE_TAG}" ) | sort -V | tail -n1`
           [[ "${VERSION}" = "${LATEST_VERSION}" ]] && PUSH_LATEST=true || unset PUSH_LATEST
-          export PLATFORM=amd64
-          echo PLATFORM=$(uname -m)
+          
           ./.github/scripts/image.sh
         env:
           CONTAINER_USER: '${{ secrets.DOCKER_USER }}'
