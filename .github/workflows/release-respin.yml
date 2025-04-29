@@ -49,7 +49,7 @@ jobs:
         run: |
           export PROJECT_TAG="${{ env.CONTAINER_TAG }}"
           export VERSION="${{ env.CONTAINER_TAG }}"
-          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/skupper/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq '.tags[] | select(has("end_ts") | not) | .name' | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
+          export BUILD_NUMBER=$((`curl -s https://quay.io/api/v1/repository/ganeshmurthy/skupper-router/tag/?filter_tag_name=like:${VERSION} | jq '.tags[] | select(has("end_ts") | not) | .name' | grep -E "\"${VERSION}-[0-9]+\"" | wc -l || echo 0` + 1))
           # Only accepts tag if build_number is higher than one
           [[ ${BUILD_NUMBER} -eq 1 ]] && { echo "The provided tag (${VERSION}) does not refer to a released image. You must provide a tag that has already been released."; exit 1; }
           # Verify if build number is unique, otherwise fail
