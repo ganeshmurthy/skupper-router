@@ -261,13 +261,33 @@ def retry_assertion(function, timeout=TIMEOUT, delay=.001, max_delay=1):
                            exception=AssertionError)
 
 
+def is_ipv6_supported() -> bool:
+    # If Python's socket library has no support for IPv6, then the we can't use IPv6 anyways.
+    if not socket.has_ipv6:
+        return False
+    try:
+        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        s.bind(("::1", 0))
+        s.close()
+        return True
+    except OSError as e:
+        # https://docs.python.org/3/library/errno.html
+        if e.errno in [errno.EADDRNOTAVAIL, errno.EAFNOSUPPORT]:
+            return False
+        if e.errno in [errno.EADDRINUSE]:
+            return True
+        return False
+
+
 def get_local_host_socket(socket_address_family='IPv4'):
     if socket_address_family == 'IPv4':
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = '127.0.0.1'
     elif socket_address_family == 'IPv6':
-        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        host = '::1'
+        # we need to check if IPV6 is enabled on the machine in which this code is running
+        if is_ipv6_supported():
+            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            host = '::1'
     else:
         raise Exception(f"Invalid socket_address_family: {socket_address_family}")
     return s, host
@@ -323,7 +343,6 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
         # man 3 connect: "If connect() fails, the state of the socket is unspecified. [...]"
         s, host = get_local_host_socket(socket_address_family)
         try:
-            s.settimeout(retry_kwargs.get('timeout', TIMEOUT))
             s.connect((host, port))
             s.shutdown(socket.SHUT_RDWR)
         finally:
