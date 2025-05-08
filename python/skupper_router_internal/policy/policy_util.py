@@ -38,18 +38,20 @@ def is_ipv6_enabled() -> bool:
     """
     Returns true if IPV6 is enabled, false otherwise
     """
-    ipv6_enabled = True
+    if not socket.has_ipv6:
+        # If the Python socket library does not support IPV6, we cannot proceed.
+        return False
     sock = None
     try:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         sock.bind(('::1', 0))
         sock.close()
+        return True
     except Exception as e:
         ipv6_enabled = False
         if sock is not None:
             sock.close()
-
-    return ipv6_enabled
+        return False
 
 
 class HostStruct:

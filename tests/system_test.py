@@ -182,7 +182,9 @@ def retry_delay(deadline, delay, max_delay):
     if remaining <= 0:
         return None
     time.sleep(min(delay, remaining))
-    return min(delay * 2, max_delay)
+    retry_delay = min(delay * 2, max_delay)
+    print(f"Retry-delay={retry_delay}")
+    return retry_delay
 
 
 # Valgrind significantly slows down the response time of the router, so use a
