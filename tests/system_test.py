@@ -327,9 +327,10 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
         s, host = get_local_host_socket(socket_address_family)
         try:
             s.settimeout(retry_kwargs.get('timeout', TIMEOUT))
-            print("Attempting connect() in wait_port()")
+            print(f"Attempting connect() in wait_port(), host={host}, port={port}")
             s.connect((host, port))
             s.shutdown(socket.SHUT_RDWR)
+            print("connect() success")
         finally:
             s.close()
 

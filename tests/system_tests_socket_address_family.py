@@ -62,6 +62,7 @@ class SocketAddressFamilyTest(TestCase):
             ] + connection
 
             config = Qdrouterd.Config(config)
+            print(f"router config={config}")
 
             # The wait=True attempts to connect to each listening port with the appropriate protocol family
             # and tests each connector
