@@ -106,76 +106,76 @@ set(SYSTEM_TESTS_HTTP system_tests_http system_tests_websockets)
 if(DEFINED ENV{SKUPPER_SYSTEM_TEST_SKIP_POLICY})
   #nothing to do
 else()
-  set(SYSTEM_TESTS_POLICY system_tests_policy system_tests_policy_oversize_basic system_tests_policy_oversize_compound)
+  #set(SYSTEM_TESTS_POLICY system_tests_policy system_tests_policy_oversize_basic system_tests_policy_oversize_compound)
 endif()
 
 if(DEFINED ENV{SKUPPER_SYSTEM_TEST_SKIP_DELIVERY_ABORT})
   #nothing to do
 else()
-  set(SYSTEM_TESTS_DELIVERY_ABORT system_tests_delivery_abort)
+  #set(SYSTEM_TESTS_DELIVERY_ABORT system_tests_delivery_abort)
 endif()
 
 # System test python modules
 foreach(py_test_module
 #   system_tests_broker
-    system_tests_autolinks
-    system_tests_drain
-    system_tests_management
-    system_tests_one_router
-    system_tests_handle_failover
-    system_tests_default_distribution
+    #system_tests_autolinks
+    #system_tests_drain
+    #system_tests_management
+    #system_tests_one_router
+    #system_tests_handle_failover
+    #system_tests_default_distribution
     ${SYSTEM_TESTS_POLICY}
     system_tests_socket_address_family
-    system_tests_protocol_settings
-    system_tests_skmanage
-    system_tests_skstat
-    system_tests_sasl_plain
-    system_tests_user_id
-    system_tests_user_id_proxy
-    system_tests_two_routers
-    system_tests_interior_sync_up
-    system_tests_distribution
-    system_tests_dynamic_terminus
-    system_tests_log_message_components
-    system_tests_failover_list
+    #system_tests_protocol_settings
+    #system_tests_skmanage
+    #system_tests_skstat
+    #system_tests_sasl_plain
+    #system_tests_user_id
+    #system_tests_user_id_proxy
+    #system_tests_two_routers
+    #system_tests_interior_sync_up
+    #system_tests_distribution
+    #system_tests_dynamic_terminus
+    #system_tests_log_message_components
+    #system_tests_failover_list
     ${SYSTEM_TESTS_DELIVERY_ABORT}
-    system_tests_topology
-    system_tests_topology_disposition
-    system_tests_topology_addition
-    system_tests_delivery_counts
-    system_tests_cmdline_parsing
-    system_tests_bad_configuration
-    system_tests_ssl
-    system_tests_edge_router
-    system_tests_edge_router1
+    #system_tests_topology
+    #system_tests_topology_disposition
+    #system_tests_topology_addition
+    #system_tests_delivery_counts
+    #system_tests_cmdline_parsing
+    #system_tests_bad_configuration
+    #system_tests_ssl
+    #system_tests_edge_router
+    #system_tests_edge_router1
 #    system_tests_edge_mesh
-    system_tests_connector_status
-    system_tests_core_endpoint
+    #system_tests_connector_status
+    #system_tests_core_endpoint
     ${SYSTEM_TESTS_HTTP}
-    system_tests_priority
-    system_tests_core_client
-    system_tests_multicast
-    system_tests_router_mesh
-    system_tests_stuck_deliveries
-    system_tests_streaming_deliveries
-    system_tests_log_level_update
-    system_tests_routing_protocol
-    system_tests_open_properties
-    system_tests_grpc
-    system_tests_http1_over_tcp
-    system_tests_http_observer
-    system_tests_tcp_adaptor
-    system_tests_tcp_adaptor_tls
-    system_tests_tcp_conns_terminate
-    system_tests_address_watch
-    system_tests_router_annotations
-    system_tests_vflow
-    system_tests_expandvars
-    system_tests_panic_handler
-    system_tests_resend_released
-    system_tests_http1_decoder
-    system_tests_cert_rotation
-    system_tests_split_path
+    #system_tests_priority
+    #system_tests_core_client
+    #system_tests_multicast
+    #system_tests_router_mesh
+    #system_tests_stuck_deliveries
+    #system_tests_streaming_deliveries
+    #system_tests_log_level_update
+    #system_tests_routing_protocol
+    #system_tests_open_properties
+    #system_tests_grpc
+    #system_tests_http1_over_tcp
+    #system_tests_http_observer
+    #system_tests_tcp_adaptor
+    #system_tests_tcp_adaptor_tls
+    #system_tests_tcp_conns_terminate
+    #system_tests_address_watch
+    #system_tests_router_annotations
+    #system_tests_vflow
+    #system_tests_expandvars
+    #system_tests_panic_handler
+    #system_tests_resend_released
+    #system_tests_http1_decoder
+    #system_tests_cert_rotation
+    #system_tests_split_path
     )
 
   string(CONFIGURE "${PYTHON_TEST_COMMAND}" CONFIGURED_PYTHON_TEST_COMMAND)

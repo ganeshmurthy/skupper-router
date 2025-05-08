@@ -74,13 +74,13 @@ class SocketAddressFamilyTest(TestCase):
 
         inter_router_port = cls.tester.get_port(socket_address_family='IPv6')
         inter_router_ipv4_port = cls.tester.get_port(socket_address_family='IPv4')
-
+        print("SocketAddressFamilyTest Router A")
         router('A',
                [
                    ('listener', {'host': '::1', 'role': 'inter-router', 'socketAddressFamily': 'IPv6', 'port': inter_router_port})
                ]
                )
-
+        print("SocketAddressFamilyTest Router A - done")
         router('B',
                [
                    # Tests an IPv6 connector
@@ -89,13 +89,14 @@ class SocketAddressFamilyTest(TestCase):
                ]
 
                )
-
+        print("SocketAddressFamilyTest Router B - done")
         router('C',
                [
                    # Tests an IPv4 connector
                    ('connector', {'host': '127.0.0.1', 'role': 'inter-router', 'port': inter_router_ipv4_port})
                ]
                )
+        print("SocketAddressFamilyTest Router C - done")
         cls.routers[0].wait_router_connected('QDR.B')
         cls.routers[1].wait_router_connected('QDR.A')
         cls.routers[2].wait_router_connected('QDR.B')

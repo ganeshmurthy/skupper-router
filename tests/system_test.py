@@ -313,6 +313,7 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
     def check(e):
         """Only retry on connection refused"""
         if isinstance(e, socket.error) and e.errno == errno.ECONNREFUSED:
+            print("check() in wait_port() errno.ECONNREFUSED")
             return  # try again
         raise e
 
@@ -324,6 +325,7 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
         s, host = get_local_host_socket(socket_address_family)
         try:
             s.settimeout(retry_kwargs.get('timeout', TIMEOUT))
+            print("Attempting connect() in wait_port()")
             s.connect((host, port))
             s.shutdown(socket.SHUT_RDWR)
         finally:
