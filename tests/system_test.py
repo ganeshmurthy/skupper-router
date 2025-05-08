@@ -280,6 +280,8 @@ def is_ipv6_supported() -> bool:
 
 
 def get_local_host_socket(socket_address_family='IPv4'):
+    host = None
+    s = None
     if socket_address_family == 'IPv4':
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = '127.0.0.1'
@@ -290,6 +292,10 @@ def get_local_host_socket(socket_address_family='IPv4'):
             host = '::1'
     else:
         raise Exception(f"Invalid socket_address_family: {socket_address_family}")
+
+    if host is None:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host = '127.0.0.1'
     return s, host
 
 
