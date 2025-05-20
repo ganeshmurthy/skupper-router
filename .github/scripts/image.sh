@@ -22,7 +22,7 @@ set -exo pipefail
 CONTAINER=podman
 PROJECT_NAME=skupper-router
 CONTAINER_REGISTRY=quay.io
-CONTAINER_ORG=skupper
+CONTAINER_ORG=ganeshmurthy
 export BUILDAH_FORMAT=docker
 # If PROJECT_TAG is not defined set PROJECT_TAG to main
 if [ -z "$PROJECT_TAG" ]; then
