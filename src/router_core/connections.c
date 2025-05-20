@@ -139,7 +139,7 @@ qdr_connection_t *qdr_connection_opened(qdr_core_t                   *core,
     // High frequency log message, but still needs to show at INFO level for non-normal(non-client) connections like
     // inter-router connections and inter-edge connections etc.
     // Normal client connections will log at DEBUG level since these are high frequency log messages.
-    qd_log(LOG_ROUTER_CORE, conn->role == QDR_ROLE_NORMAL ? QD_LOG_DEBUG : QD_LOG_INFO,
+    qd_log(LOG_ROUTER_CORE, QD_LOG_INFO,
            "[C%" PRIu64
            "] Connection Opened: dir=%s host=%s encrypted=%s"
            " auth=%s user=%s container_id=%s props=%s",
