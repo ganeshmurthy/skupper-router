@@ -35,6 +35,9 @@ class SocketAddressFamilyTest(TestCase):
         """
         super(SocketAddressFamilyTest, cls).setUpClass()
 
+        if not is_ipv6_enabled():
+            return
+
         def router(name, connection):
 
             config = [
@@ -66,9 +69,6 @@ class SocketAddressFamilyTest(TestCase):
             # The wait=True attempts to connect to each listening port with the appropriate protocol family
             # and tests each connector
             cls.routers.append(cls.tester.qdrouterd(name, config, wait=True))
-
-        if not is_ipv6_enabled():
-            return
 
         cls.routers = []
 
