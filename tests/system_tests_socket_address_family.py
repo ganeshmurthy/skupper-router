@@ -60,7 +60,7 @@ class SocketAddressFamilyTest(TestCase):
 
                 # Specify host as ::1 and protocol family as IPv6
                 ('listener', {'host': '::1', 'socketAddressFamily': 'IPv6',
-                              'port': cls.tester.get_port(socket_address_family='IPv6')}),
+                              'port': 55001}),
 
             ] + connection
 
