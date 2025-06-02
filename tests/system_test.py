@@ -281,7 +281,7 @@ def check_port_refuses_connection(port, socket_address_family='IPv4'):
         print(f"check_port_refuses_bind_and_connection host={host}, port={port}")
         s.settimeout(TIMEOUT)
         s.connect((host, port))
-        s.shutdown(socket.SHUT_RDWR)
+        #s.shutdown(socket.SHUT_RDWR)
     except OSError as e:
         return e.errno == errno.ECONNREFUSED
     finally:
@@ -315,7 +315,7 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
             print(f"wait_port host={host}, port={port}")
             s.settimeout(retry_kwargs.get('timeout', TIMEOUT))
             s.connect((host, port))
-            s.shutdown(socket.SHUT_RDWR)
+            #s.shutdown(socket.SHUT_RDWR)
         finally:
             print(f"wait_port closing socket host={host}, port={port}")
             s.close()
