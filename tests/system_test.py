@@ -276,35 +276,23 @@ def get_local_host_socket(socket_address_family='IPv4'):
 def check_port_refuses_connection(port, socket_address_family='IPv4'):
     """Return true if connecting to host:port gives 'connection refused'."""
     s, host = get_local_host_socket(socket_address_family)
+
     try:
+        print(f"check_port_refuses_bind_and_connection host={host}, port={port}")
+        s.settimeout(TIMEOUT)
         s.connect((host, port))
+        s.shutdown(socket.SHUT_RDWR)
     except OSError as e:
         return e.errno == errno.ECONNREFUSED
     finally:
+        print(f"check_port_refuses_connection closing socket host={host}, port={port}")
         s.close()
-
     return False
-
-
-def check_port_permits_binding(port, socket_address_family='IPv4'):
-    """Return true if binding to the port succeeds."""
-    s, _ = get_local_host_socket(socket_address_family)
-    host = ""
-    try:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # so that followup binders are not blocked
-        s.bind((host, port))
-    except OSError:
-        return False
-    finally:
-        s.close()
-
-    return True
 
 
 def is_port_available(port, socket_address_family='IPv4'):
     """Return true if a new server will be able to bind to the port."""
-    return (check_port_permits_binding(port, socket_address_family)
-            and check_port_refuses_connection(port, socket_address_family))
+    return check_port_refuses_connection(port, socket_address_family) 
 
 
 def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
@@ -326,8 +314,6 @@ def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
         try:
             print(f"wait_port host={host}, port={port}")
             s.settimeout(retry_kwargs.get('timeout', TIMEOUT))
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind((host, port))
             s.connect((host, port))
             s.shutdown(socket.SHUT_RDWR)
         finally:
