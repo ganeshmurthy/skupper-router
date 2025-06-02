@@ -46,6 +46,14 @@ def is_ipv6_enabled() -> bool:
     try:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         sock.bind(('::1', 0))
+        # Get the address and port the socket is bound to
+        bound_address = sock.getsockname()
+        ip_address = bound_address[0]
+        port_number = bound_address[1]
+
+        print(f"Socket is bound to IP: {ip_address}")
+        print(f"Socket is using ephemeral port: {port_number}")
+
         sock.close()
     except Exception as e:
         if sock:

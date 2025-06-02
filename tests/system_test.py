@@ -1292,7 +1292,7 @@ class Tester:
     root_dir = os.path.abspath(__name__ + '.dir')
 
     # Minimum and maximum port number for free port searches
-    port_range = (20000, 30000)
+    port_range = (20000, 40000)
 
     def __init__(self, id):
         """
