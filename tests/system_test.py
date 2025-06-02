@@ -292,7 +292,7 @@ def check_port_refuses_connection(port, socket_address_family='IPv4'):
 
 def is_port_available(port, socket_address_family='IPv4'):
     """Return true if a new server will be able to bind to the port."""
-    return check_port_refuses_connection(port, socket_address_family) 
+    return check_port_refuses_connection(port, socket_address_family)
 
 
 def wait_port(port, socket_address_family='IPv4', **retry_kwargs):
