@@ -73,7 +73,7 @@ class SocketAddressFamilyTest(TestCase):
 
         cls.routers = []
 
-        inter_router_port = int(cls.tester.get_port(socket_address_family='IPv6')) + 100
+        inter_router_port = 55000
         inter_router_ipv4_port = cls.tester.get_port(socket_address_family='IPv4')
 
         router('A',
