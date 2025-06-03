@@ -38,7 +38,7 @@ class SocketAddressFamilyTest(TestCase):
         if not is_ipv6_enabled():
             return
 
-        def router(name, ipv6_port, connection):
+        def router(name, connection):
 
             config = [
                 ('router', {'mode': 'interior', 'id': 'QDR.%s' % name}),
@@ -60,7 +60,7 @@ class SocketAddressFamilyTest(TestCase):
 
                 # Specify host as ::1 and protocol family as IPv6
                 ('listener', {'host': '::1', 'socketAddressFamily': 'IPv6',
-                              'port': ipv6_port}),
+                              'port': cls.tester.get_port(socket_address_family='IPv6')}),
 
             ] + connection
 
@@ -73,16 +73,16 @@ class SocketAddressFamilyTest(TestCase):
 
         cls.routers = []
 
-        inter_router_port = 55000
+        inter_router_port = cls.tester.get_port(socket_address_family='IPv6')
         inter_router_ipv4_port = cls.tester.get_port(socket_address_family='IPv4')
 
-        router('A', 55001,
+        router('A',
                [
                    ('listener', {'host': '::1', 'role': 'inter-router', 'socketAddressFamily': 'IPv6', 'port': inter_router_port})
                ]
                )
 
-        router('B', 55002,
+        router('B',
                [
                    # Tests an IPv6 connector
                    ('connector', {'host': '::1', 'role': 'inter-router', 'socketAddressFamily': 'IPv6', 'port': inter_router_port}),
@@ -91,7 +91,7 @@ class SocketAddressFamilyTest(TestCase):
 
                )
 
-        router('C', 55003,
+        router('C',
                [
                    # Tests an IPv4 connector
                    ('connector', {'host': '127.0.0.1', 'role': 'inter-router', 'port': inter_router_ipv4_port})
