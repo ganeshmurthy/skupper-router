@@ -25,6 +25,7 @@ from system_test import TestCase, Qdrouterd, main_module
 from system_test import unittest
 from skupper_router_internal.policy.policy_util import is_ipv6_enabled
 
+
 def run_ip_addr():
     try:
         # Run the command and capture its output
