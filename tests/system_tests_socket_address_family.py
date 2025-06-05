@@ -17,12 +17,40 @@
 # under the License.
 #
 
+import subprocess
 from proton import Message
 from proton.handlers import MessagingHandler
 from proton.reactor import Container
 from system_test import TestCase, Qdrouterd, main_module
 from system_test import unittest
 from skupper_router_internal.policy.policy_util import is_ipv6_enabled
+
+def run_ip_addr():
+    try:
+        # Run the command and capture its output
+        # 'capture_output=True' stores stdout and stderr
+        # 'text=True' decodes stdout and stderr as text (UTF-8 by default)
+        # 'check=True' will raise a CalledProcessError if the command returns a non-zero exit code
+        result = subprocess.run(['ip', 'addr'], capture_output=True, text=True, check=True)
+
+        # Print the standard output
+        print("Command Output:")
+        print(result.stdout)
+
+        # If there was any error output (though 'check=True' would likely have raised an exception)
+        if result.stderr:
+            print("Command Error Output:")
+            print(result.stderr)
+
+        print(f"\nCommand exited with code: {result.returncode}")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running command: {e}")
+        print(f"Stderr: {e.stderr}")
+    except FileNotFoundError:
+        print("Error: The 'ip' command was not found. Make sure it's installed and in your PATH.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 
 class SocketAddressFamilyTest(TestCase):
@@ -66,6 +94,8 @@ class SocketAddressFamilyTest(TestCase):
             # The wait=True attempts to connect to each listening port with the appropriate protocol family
             # and tests each connector
             cls.routers.append(cls.tester.qdrouterd(name, config, wait=True))
+
+        run_ip_addr()
 
         if not is_ipv6_enabled():
             return
